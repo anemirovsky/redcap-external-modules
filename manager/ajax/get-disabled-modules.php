@@ -74,6 +74,14 @@ require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php
 		} else {
 			$enabledModules = ExternalModules::getDiscoverableModules();
 		}
+		// Sort modules by title
+		$moduleTitles = array();
+		foreach ($enabledModules as $prefix => $version) {
+			$config = ExternalModules::getConfig($prefix, $version, $_GET['pid']);			
+			$moduleTitles[$prefix] = trim($config['name']);
+		}
+		array_multisort($moduleTitles, SORT_REGULAR, $enabledModules);
+		// Loop through each module to render
 		foreach ($enabledModules as $prefix => $version) {
 			$config = ExternalModules::getConfig($prefix, $version, $_GET['pid']);
 			$enabled = ExternalModules::getProjectSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
