@@ -326,30 +326,35 @@ ExternalModules.Settings.prototype.getColumnHtml = function(setting,value,classN
 		key = this.getInstanceName(key, instance);
 	}
 
+	var selectAttrs = [];
+	if (typeof setting.autocomplete !== 'undefined' && setting.autocomplete == true) {
+		selectAttrs["class"] = "external-modules-autocomplete-dropdown";
+	}
+
 	var inputHtml;
 	if(type == 'dropdown'){
-		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+		inputHtml = this.getSelectElement(key, setting.choices, value, selectAttrs);
 	}
 	else if(type == 'field-list'){
-		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+		inputHtml = this.getSelectElement(key, setting.choices, value, selectAttrs);
 	}
 	else if(type == 'form-list'){
-		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+		inputHtml = this.getSelectElement(key, setting.choices, value, selectAttrs);
 	}
 	else if(type == 'event-list'){
-		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+		inputHtml = this.getSelectElement(key, setting.choices, value, selectAttrs);
 	}
 	else if(type == 'arm-list'){
-		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+		inputHtml = this.getSelectElement(key, setting.choices, value, selectAttrs);
 	}
 	else if(type == 'user-list'){
-		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+		inputHtml = this.getSelectElement(key, setting.choices, value, selectAttrs);
 	}
 	else if(type == 'user-role-list'){
-		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+		inputHtml = this.getSelectElement(key, setting.choices, value, selectAttrs);
 	}
 	else if(type == 'dag-list'){
-		inputHtml = this.getSelectElement(key, setting.choices, value, []);
+		inputHtml = this.getSelectElement(key, setting.choices, value, selectAttrs);
 	}
 	else if(type == 'project-id'){
 		// Set up an option to store the saved value (setting.choice will be blank otherwise)
@@ -698,6 +703,8 @@ ExternalModules.Settings.prototype.initializeRichTextFields = function(){
 			cache: true
 		}
 	});
+
+	$(".external-modules-autocomplete-dropdown").select2();
 
 	$('.external-modules-rich-text-field').each(function(index, textarea){
 		textarea = $(textarea)

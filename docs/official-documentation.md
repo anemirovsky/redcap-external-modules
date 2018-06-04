@@ -110,7 +110,8 @@ Below is a *mostly* comprehensive list of all items that can be added to the  **
 	* **choices** consist of a **value** and a **name** for selecting elements (dropdowns, radios).
 	* **super-users-only** can be set to **true** to only allow super users to access a given setting.
 	* **repeatable** is a boolean that specifies whether the element can repeat many times. **If it is repeatable (true), the element will return an array of values.**
-	* **branchingLogic** is an structure which represents a condition or a set of conditions that defines whether the field should be displayed. See examples at the end of this section.  This option does **not** currently work on **sub_settings**, and [help is wanted](https://github.com/vanderbilt/redcap-external-modules/issues/93) to make that possible.
+	* **autocomplete** is a boolean that enables autocomplete on dropdown fields.
+	* **branchingLogic** is an structure which represents a condition or a set of conditions that defines whether the field should be displayed. See examples at the end of this section.
 	* When type = **sub_settings**, the sub_settings element can specify a group of items that can be repeated as a group if the sub_settings itself is repeatable. The settings within sub_settings follow the same specification here.  It is also possible to nest sub_settings within sub_settings.
 	* As a reminder, true and false are specified as their actual values (true/false not as the strings "true"/"false"). Other than that, all values and variables are strings.
 	* Both project-settings and system-settings may have a **default** value provided (using the attribute "default"). This will set the value of a setting when the module is enabled either in the project or system, respectively.
