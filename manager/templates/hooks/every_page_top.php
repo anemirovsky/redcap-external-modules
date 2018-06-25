@@ -47,10 +47,11 @@ $getIcon = function ($icon){
 				$.post(app_path_webroot+'ProjectGeneral/project_menu_collapse.php?pid='+ExternalModules.PID, { menu_id: $(this).prop('id'), collapse: collapse });
 			});
 
-			function getLink(icon, name,url){
+			function getLink(icon, name,url, target){
 				newLink = exampleLink.clone()
 				newLink.find('img').attr('src', icon)
 				newLink.find('a').attr('href', url+'&pid=<?= $project_id ?>')
+				newLink.find('a').attr('target', target)
 				newLink.find('a').html(name);
 				return(newLink);
 			}
@@ -71,8 +72,9 @@ $getIcon = function ($icon){
 						if(is_array($new_link)){
 							$link = $new_link;
 						}
+
 						?>
-						newLink = getLink('<?=$getIcon($link['icon'])?>', '<?= $name ?>','<?=$link['url']?>');
+						newLink = getLink('<?=$getIcon($link['icon'])?>', '<?= $name ?>','<?=$link['url']?>', '<?= $link['target'] ?>');
 						menubox.append(newLink);
 						<?php
 					}

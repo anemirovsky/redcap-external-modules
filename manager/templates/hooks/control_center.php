@@ -19,8 +19,9 @@ if (!empty($extModLinks)) {
 				}
 				?>">';
 			items += '&nbsp; ';
-			items += '<a href="<?= $link['url'] ?>"><?= $name ?></a>';
+			items += '<a href="<?= $link['url'] ?>" target="<?= $link["target"]?>"><?= $name ?></a>';
 			items += '</div>';
+
 			<?php
 		}
 		?>
