@@ -33,7 +33,7 @@ redcap
 
 Your module class is the central PHP file that will run all the business logic for the module. You may actually have many other PHP files (classes or include files), as well as JavaScript, CSS, etc. All other such files are optional, but the module class itself is necessary and drives the module.
 
-There is a class named *AbstractExternalModule* that is included in the External Modules framework, and it provides all the developer methods documented further down on this page that you can use in your module. Your module class must extend the *AbstractExternalModule* class, as seen below in an example whose class file is named `MyModuleClass.php`.
+There is a class named *AbstractExternalModule* that is included in the External Modules framework, and it provides all the developer methods documented further down on this page that you can use in your module.  This class is the only portion of the External Modules framework that is publicly supported.  Do not reference any other part of the framework (like the *ExternalModules* class), as they could change at any time.  Your module class must extend the *AbstractExternalModule* class, as seen below in an example whose class file is named `MyModuleClass.php`.
 
 ``` php
 <?php
