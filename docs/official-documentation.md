@@ -33,17 +33,15 @@ redcap
 
 Your module class is the central PHP file that will run all the business logic for the module. You may actually have many other PHP files (classes or include files), as well as JavaScript, CSS, etc. All other such files are optional, but the module class itself is necessary and drives the module.
 
-There is a class named *AbstractExternalModule* that is included in the External Modules framework, and it provides all the developer methods documented further down on this page that you can use in your module. Your module class must extend the *AbstractExternalModule* class, as seen below in an example whose class file is named `MyModuleClass.php`.
+There is a class named *AbstractExternalModule* that is included in the External Modules framework, and it provides all the developer methods documented further down on this page that you can use in your module.  The methods documented further down are the only portion of the External Modules framework that is publicly supported.  Do not reference any other methods or files (like the *ExternalModules* class), as they could change at any time.  Your module class must extend the *AbstractExternalModule* class, as seen below in an example whose class file is named `MyModuleClass.php`.
 
 ``` php
 <?php
 // Set the namespace defined in your config file
 namespace MyModuleNamespace\MyModuleClass;
-// The next 2 lines should always be included and be the same in every module
-use ExternalModules\AbstractExternalModule;
-use ExternalModules\ExternalModules;
+
 // Declare your module class, which must extend AbstractExternalModule 
-class MyModuleClass extends AbstractExternalModule {
+class MyModuleClass extends \ExternalModules\AbstractExternalModule {
      // Your module methods, constants, etc. go here
 }
 ```
@@ -197,9 +195,8 @@ Next, you must **name a method in your module class the exact same name as the n
 ``` php
 <?php 
 namespace Vanderbilt\HideHomePageEmails;
-use ExternalModules\AbstractExternalModule;
-use ExternalModules\ExternalModules;
-class HideHomePageEmails extends AbstractExternalModule 
+
+class HideHomePageEmails extends \ExternalModules\AbstractExternalModule 
 {
     // This method will be called by the redcap_data_entry_form hook
     function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance) 
@@ -327,7 +324,7 @@ $value = $module->getProjectSetting('my-project-setting');
 
 ### Available developer methods in External Modules
 
-Listed below are methods that module creators may utilize for storing and managing settings for their module. Since the module class will extend the *AbstractExternalModule* class, these methods can be called inside the module class using **$this** (e.g., `$this->getModuleName()`).
+Listed below are the publicly supported methods that module creators may utilize in their modules. Do not reference any other methods or files (like the *ExternalModules* class) in any module, as they could change at any time. Since the module class will extend the *AbstractExternalModule* class, these methods can be called inside the module class using **$this** (e.g., `$this->getModuleName()`).
 
 Method  | Description
 ------- | -----------
