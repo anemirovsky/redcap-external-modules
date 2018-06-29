@@ -39,11 +39,9 @@ There is a class named *AbstractExternalModule* that is included in the External
 <?php
 // Set the namespace defined in your config file
 namespace MyModuleNamespace\MyModuleClass;
-// The next 2 lines should always be included and be the same in every module
-use ExternalModules\AbstractExternalModule;
-use ExternalModules\ExternalModules;
+
 // Declare your module class, which must extend AbstractExternalModule 
-class MyModuleClass extends AbstractExternalModule {
+class MyModuleClass extends \ExternalModules\AbstractExternalModule {
      // Your module methods, constants, etc. go here
 }
 ```
@@ -197,9 +195,8 @@ Next, you must **name a method in your module class the exact same name as the n
 ``` php
 <?php 
 namespace Vanderbilt\HideHomePageEmails;
-use ExternalModules\AbstractExternalModule;
-use ExternalModules\ExternalModules;
-class HideHomePageEmails extends AbstractExternalModule 
+
+class HideHomePageEmails extends \ExternalModules\AbstractExternalModule 
 {
     // This method will be called by the redcap_data_entry_form hook
     function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance) 
