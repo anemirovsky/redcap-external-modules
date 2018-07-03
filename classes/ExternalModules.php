@@ -25,6 +25,8 @@ if (class_exists('ExternalModules\ExternalModules')) {
 }
 
 use \Exception;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Adapter\Local;
 
 class ExternalModules
 {
@@ -2622,27 +2624,12 @@ class ExternalModules
 	}
 	
 	# general method to delete a directory by first deleting all files inside it
-	public static function rrmdir($dirPath, $recursion=1) 
+	private static function rrmdir($dirPath)
 	{
-		if (!is_dir($dirPath) || $recursion > 25) return false;
-		if (substr($dirPath, strlen($dirPath) - 1, 1) != DS) {
-			$dirPath .= DS;
-		}
-		if (rmdir($dirPath)) return true;
-		$files = getDirFiles($dirPath);
-		foreach ($files as $file) {
-			$file = $dirPath . $file;
-			if (is_dir($file)) {
-				self::rrmdir($file, $recursion+1);
-			} else {
-				unlink($file);
-			}
-		}
-		$deleteSuccess = rmdir($dirPath);
-		if (!$deleteSuccess) {
-			$deleteSuccess = self::rrmdir($dirPath, $recursion+1);
-		}
-		return $deleteSuccess;
+		$adapter = new Local(dirname($dirPath));
+		$filesystem = new Filesystem($adapter);
+
+		$filesystem->deleteDir(basename($dirPath));
 	}
 	
 	// Find the redcap_connect.php file and require it
