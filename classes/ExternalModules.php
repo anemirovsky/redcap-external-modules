@@ -1453,10 +1453,19 @@ class ExternalModules
 	# Use the $arguments variable to pass data to the required file.
 	static function safeRequireOnce($path, $arguments = array()){
 		if (file_exists(APP_PATH_EXTMOD . $path)) {
-			require_once APP_PATH_EXTMOD . $path;
-		} else {
-			require_once $path;
+			$path = APP_PATH_EXTMOD . $path;
 		}
+
+		/**
+		 * The current directory could be a few different things at this point.
+		 * We temporarily set it to the module directory to avoid relative paths from incorrectly referencing the wrong directory.
+		 * This fixed a real world case where a require call for 'vendor/autoload.php' in the module
+		 * was loading the autoload.php file from somewhere other than the module.
+		 */
+		$originalDir = getcwd();
+		chdir(dirname($path));
+		require_once $path;
+		chdir($originalDir);
 	}
 
 	# Ensure compatibility with PHP version and REDCap version during module installation using config values
