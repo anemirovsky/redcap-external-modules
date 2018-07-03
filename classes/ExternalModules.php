@@ -25,8 +25,8 @@ if (class_exists('ExternalModules\ExternalModules')) {
 }
 
 use \Exception;
-use League\Flysystem\Filesystem;
-use League\Flysystem\Adapter\Local;
+use \RecursiveDirectoryIterator;
+use \RecursiveIteratorIterator;
 
 class ExternalModules
 {
@@ -2624,12 +2624,20 @@ class ExternalModules
 	}
 	
 	# general method to delete a directory by first deleting all files inside it
-	private static function rrmdir($dirPath)
+	# Copied from https://stackoverflow.com/questions/3349753/delete-directory-with-files-in-it
+	private static function rrmdir($dir)
 	{
-		$adapter = new Local(dirname($dirPath));
-		$filesystem = new Filesystem($adapter);
-
-		$filesystem->deleteDir(basename($dirPath));
+		$it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+		$files = new RecursiveIteratorIterator($it,
+					 RecursiveIteratorIterator::CHILD_FIRST);
+		foreach($files as $file) {
+			if ($file->isDir()){
+				rmdir($file->getRealPath());
+			} else {
+				unlink($file->getRealPath());
+			}
+		}
+		rmdir($dir);
 	}
 	
 	// Find the redcap_connect.php file and require it
