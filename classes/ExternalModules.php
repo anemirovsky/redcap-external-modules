@@ -2201,7 +2201,7 @@ class ExternalModules
 			if (is_dir($modulePath)) {
 				// If the module was downloaded from the central repo and then deleted via UI and still was found in the server,
 				// that means that load balancing is happening, so we need to delete the directory on this node too.
-				if (self::wasModuleDeleted($directoryToFind) && !self::wasModuleDownloadedFromRepo($directoryToFind)) {
+				if (self::wasModuleDeleted($modulePath) && !self::wasModuleDownloadedFromRepo($directoryToFind)) {
 					// Delete the directory on this node
 					self::deleteModuleDirectory($directoryToFind, true);
 					// Return false since this module should not even be on the server
@@ -2574,7 +2574,7 @@ class ExternalModules
 		   return "0";
 		}
 		// Add to deleted modules array
-		self::$deletedModules[] = $moduleFolderDir;
+		self::$deletedModules[basename($moduleFolderDir)] = time();
 		// Remove row from redcap_external_modules_downloads table
 		$sql = "update redcap_external_modules_downloads set time_deleted = '".NOW."' 
 				where module_name = '".db_escape($moduleFolderName)."'";
@@ -2586,7 +2586,7 @@ class ExternalModules
 	}
 
 	# Was this module originally downloaded from the central repository of ext mods? Exclude it if the module has already been marked as deleted via the UI.
-	public static function wasModuleDownloadedFromRepo($moduleFolderName=null){
+	private static function wasModuleDownloadedFromRepo($moduleFolderName=null){
 		$sql = "select 1 from redcap_external_modules_downloads 
 				where module_name = '".db_escape($moduleFolderName)."' and time_deleted is null";
 		$q = db_query($sql);
@@ -2594,22 +2594,36 @@ class ExternalModules
 	}
 
 	# Was this module, which was downloaded from the central repository of ext mods, deleted via the UI?
-	public static function wasModuleDeleted($moduleFolderName=null){
-		if(!isset(self::$deletedModules)){
-			self::getDeletedModules();
+	private static function wasModuleDeleted($modulePath){
+		$moduleFolderName = basename($modulePath);
+
+		$deletionTimesByFolderName = self::getDeletedModules();
+		$deletionTime = @$deletionTimesByFolderName[$moduleFolderName];
+
+		if($deletionTime !== null){
+			if($deletionTime > filemtime($modulePath)){
+				return true;
+			}
+			else{
+				// The directory was re-created AFTER deletion.
+				// This likely means a developer recreated the directory manually via git clone instead of using the REDCap Repo to download the module.
+				// We should remove this row from the module downloads table since this module is no longer managed via the REDCap Rep.
+				self::query("delete from redcap_external_modules_downloads where module_name = '$moduleFolderName'");
+			}
 		}
-		return in_array($moduleFolderName, self::$deletedModules);
+
+		return false;
 	}
 	
 	# Obtain array of all DELETED modules (deleted via UI) that were originally downloaded from the REDCap Repo.
 	private static function getDeletedModules(){
 		if(!isset(self::$deletedModules)){
-			$sql = "select module_name from redcap_external_modules_downloads 
+			$sql = "select module_name, time_deleted from redcap_external_modules_downloads 
 					where time_deleted is not null";
 			$q = db_query($sql);
 			self::$deletedModules = array();
 			while ($row = db_fetch_assoc($q)) {
-				self::$deletedModules[] = $row['module_name'];
+				self::$deletedModules[$row['module_name']] = strtotime($row['time_deleted']);
 			}
 		}
 		return self::$deletedModules;
