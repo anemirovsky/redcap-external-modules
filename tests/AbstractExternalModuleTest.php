@@ -6,6 +6,9 @@ use \Exception;
 
 class AbstractExternalModuleTest extends BaseTest
 {
+	/**
+	 * @doesNotPerformAssertions
+	 */
 	function testCheckSettings_emptyConfig()
 	{
 		self::assertConfigValid([]);
@@ -36,7 +39,10 @@ class AbstractExternalModuleTest extends BaseTest
 			],
 		], 'project setting multiple times!');
     }
-	
+
+	/**
+	 * @doesNotPerformAssertions
+	 */
 	function testCheckSettingKey_valid()
 	{
 		self::assertConfigValid([
