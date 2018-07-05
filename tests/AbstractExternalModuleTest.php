@@ -382,4 +382,179 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertFalse($isPHPGreaterThan($higherVersion));
 		$this->assertTrue($isPHPGreaterThan($lowerVersion));
 	}
+
+	private function getUnitTestingModuleId()
+	{
+		$id = ExternalModules::getIdForPrefix(TEST_MODULE_PREFIX);
+		$this->assertTrue(ctype_digit($id));
+		
+		return $id;
+	}
+
+	function testLogAndQueryLog()
+	{
+		$m = $this->getInstance();
+		$testingModuleId = $this->getUnitTestingModuleId();
+
+		// Remove left over messages in case this test previously failed
+		$m->query('delete from redcap_external_modules_log where external_module_id = ' . $testingModuleId);
+
+		$message = 'This is a unit test log statement';
+		$paramName1 = 'testParam1';
+		$paramValue1 = rand();
+		$paramName2 = 'testParam2';
+		$paramValue2 = rand();
+
+		$query = function () use ($m, $testingModuleId, $message, $paramName1, $paramName2) {
+			$results = $m->queryLogs("
+				select log_id,timestamp,username,ip,external_module_id,record,message,$paramName1,$paramName2
+				where
+					message = '$message'
+					and timestamp > '2017-07-07'
+				order by log_id asc
+			");
+
+			$timestampThreshold = 5;
+
+			$rows = [];
+			while ($row = db_fetch_assoc($results)) {
+				$currentUTCTime = $date_utc = new \DateTime("now", new \DateTimeZone("UTC"));
+				$timeSinceLog = $currentUTCTime - strtotime($row['timestamp']);
+
+				$this->assertTrue(ctype_digit($row['log_id']));
+				$this->assertTrue($timeSinceLog < $timestampThreshold);
+				$this->assertEquals($testingModuleId, $row['external_module_id']);
+				$this->assertEquals($message, $row['message']);
+
+				$rows[] = $row;
+			}
+
+			return $rows;
+		};
+
+		ExternalModules::setUsername(null);
+		$_SERVER['HTTP_CLIENT_IP'] = null;
+		$m->setRecordId(null);
+		$m->log($message);
+
+		$result = $m->query('select username from redcap_user_information limit 1');
+		$username = db_fetch_assoc($result)['username'];
+
+		ExternalModules::setUsername($username);
+		$_SERVER['HTTP_CLIENT_IP'] = '1.2.3.4';
+		$m->setRecordId(rand());
+		$m->log($message, [
+			$paramName1 => $paramValue1,
+			$paramName2 => $paramValue2
+		]);
+
+		$rows = $query();
+		$this->assertEquals(2, count($rows));
+
+		$row = $rows[0];
+		$this->assertNull($row['username']);
+		$this->assertNull($row['ip']);
+		$this->assertNull($row['record']);
+		$this->assertFalse(isset($row[$paramName1]));
+		$this->assertFalse(isset($row[$paramName2]));
+
+		$row = $rows[1];
+		$this->assertEquals($username, $row['username']);
+		$this->assertEquals($_SERVER['HTTP_CLIENT_IP'], $row['ip']);
+		$this->assertEquals($m->getRecordId(), $row['record']);
+		$this->assertEquals($paramValue1, $row[$paramName1]);
+		$this->assertEquals($paramValue2, $row[$paramName2]);
+
+		$m->removeLogs("$paramName1 is null");
+		$rows = $query();
+		$this->assertEquals(1, count($rows));
+		$this->assertEquals($paramValue1, $rows[0][$paramName1]);
+
+		$m->removeLogs("message = '$message'");
+		$rows = $query();
+		$this->assertEquals(0, count($rows));
+	}
+
+	function testLog_pid()
+	{
+		$m = $this->getInstance();
+		$message = 'test';
+		$whereClause = "message = '$message'";
+		$expectedPid = rand();
+
+		$assertRowCount = function($expectedCount) use ($m, $message, $whereClause, $expectedPid){
+			$result = $m->queryLogs('select pid where ' . $whereClause);
+			$rows = [];
+			while($row = db_fetch_assoc($result)){
+				$rows[] = $row;
+
+				$pid = @$_GET['pid'];
+				if(!empty($pid)){
+					$this->assertEquals($expectedPid, $pid);
+				}
+			}
+
+			$this->assertEquals($expectedCount, count($rows));
+		};
+
+		$m->log($message);
+		$_GET['pid'] = $expectedPid;
+		$m->log($message);
+
+		// A pid is still set, so only that row should be returned.
+		$assertRowCount(1);
+
+		// Unset the pid and make sure both rows are returned.
+		$_GET['pid'] = null;
+		$assertRowCount(2);
+
+		// Re-set the pid and attempt to remove only the pid row
+		$_GET['pid'] = $expectedPid;
+		$m->removeLogs($whereClause);
+
+		// Unset the pid and make sure only the row without the pid is returned
+		$_GET['pid'] = null;
+		$assertRowCount(1);
+
+		// Make sure removeLogs() now removes the row without the pid.
+		$m->removeLogs($whereClause);
+		$assertRowCount(0);
+	}
+
+	function testLog_emptyMessage()
+	{
+		$m = $this->getInstance();
+
+		foreach ([null, ''] as $value) {
+			$this->assertThrowsException(function () use ($m, $value) {
+				$m->log($value);
+			}, 'A message is required for log entries.');
+		}
+	}
+
+	function testLog_reservedParameterNames()
+	{
+		$m = $this->getInstance();
+
+		$reservedParameterNames = AbstractExternalModule::RESERVED_PARAMETER_NAMES;
+		$reservedParameterNames[] = 'username';
+
+		foreach ($reservedParameterNames as $name) {
+			$this->assertThrowsException(function () use ($m, $name) {
+				$m->log('test', [
+					$name => 'test'
+				]);
+			}, 'parameter name is set automatically and cannot be overridden');
+		}
+	}
+
+	function testQueryLogs_complexStatements()
+	{
+		$m = $this->getInstance();
+
+		// Just make sure this query is parsable, and runs without an exception.
+		$m->queryLogs("select 1 where a = 1 and (b = 2 or c = 3)");
+
+		$this->assertTrue(true); // Each test requires an assertion
+	}
 }

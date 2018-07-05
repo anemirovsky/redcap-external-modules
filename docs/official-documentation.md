@@ -341,9 +341,11 @@ getFieldLabel($fieldName) | Returns the label for the specified field name.
 getModuleDirectoryName() | get the directory name of the current external module
 getModuleName() | get the name of the current external module
 getModulePath() | Get the path of the current module directory (e.g., /var/html/redcap/modules/votecap_v1.1/)
+getProjectId() | A convenience method for returning the current project id. 
 getProjectSetting($key&nbsp;[,&nbsp;$pid]) | Returns the value stored for the specified key for the current project if it exists.  If no value is set, null is returned.  In most cases the project id can be detected automatically, but it can optionally be specified as the third parameter instead.
 getProjectSettings([$pid]) | Gets all project settings as an array.  Useful for cases when you may be creating a custom config page for the external module in a project.
 getPublicSurveyUrl() | Returns the public survey url for the current project.
+getRecordId() | Returns the current record id if called from within a hook that includes the record id.
 getSettingConfig($key) | Returns the configuration for the specified setting.
 getSettingKeyPrefix() | This method can be overridden to prefix all setting keys.  This allows for multiple versions of settings depending on contexts defined by the module.
 getSubSettings($key) | Returns the sub-settings under the specified key in a user friendly array format.
@@ -352,7 +354,9 @@ getUrl($path [, $noAuth=false [, $useApiEndpoint=false]]) | Get the url to a res
 getUserSetting($key) | Returns the value stored for the specified key for the current user and project.  Null is always returned on surveys and NOAUTH pages.
 hasPermission($permissionName) | checks whether the current External Module has permission for $permissionName
 isSurveyPage() | Returns true if the current page is a survey.  This is primarily useful in the **redcap_every_page_before_render** hook.
-query($sql) | A thin wrapper around REDCap's db_query() that includes automatic error detection and reporting (including killed queries).
+log($message[, $parameters]) | **BETA:** *This feature may change.*  Log a message and optional array of key value pairs for later retrieval using the **queryLogs()** method.  Parameters for the current **user** and **timestamp** will automatically be stored, even if the **$parameters** argument is omitted.
+query($sql) | A thin wrapper around REDCap's db_query() that includes automatic error detection and reporting (including killed queries). 
+queryLogs($sql) | **BETA:** *This feature may change.*   Queries log entries added via the **log()** method using SQL-like syntax with the "from" portion omitted.  Queries can include standard "select", "where", "order by", and "group by" clauses.  Available columns include **log_id**, **timestamp**, **user**, **ip**, **project_id**, **record**, **message**, and any parameter name passed to the **log()** method.  All columns must be specified explicitly ("select \*" syntax is not supported).  Here are some query examples:*<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select timestamp, user where message = 'some message'<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select message, ip<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timestamp > '2017-07-07'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and user in ('joe', 'tom')<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or some_parameter like '%abc%'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;order by timestamp desc<br><br>*
 removeProjectSetting($key&nbsp;[,&nbsp;$pid]) | Remove the value stored for this project and the specified key.  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead. 
 removeSystemSetting($key) | Removes the value stored systemwide for the specified key.
 removeUserSetting($key) | Removes the value stored for the specified key for the current user and project.  This method does nothing on surveys and NOAUTH pages.

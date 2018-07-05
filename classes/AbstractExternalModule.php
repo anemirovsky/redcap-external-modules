@@ -1,9 +1,16 @@
 <?php
 namespace ExternalModules;
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
+AbstractExternalModule::init();
+
 if (class_exists('ExternalModules\AbstractExternalModule')) {
 	return;
 }
+
+use PHPSQLParser\PHPSQLParser;
+use PHPSQLParser\PHPSQLCreator;
 
 use Exception;
 use UIState;
@@ -11,10 +18,14 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
+	const RESERVED_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'record', 'message'];
+
+	private static $RESERVED_PARAMETER_NAMES_FLIPPED;
 
 	public $PREFIX;
 	public $VERSION;
 
+	private $recordId;
 	private $userBasedSettingPermissions = true;
 
 	# constructor
@@ -1108,5 +1119,213 @@ class AbstractExternalModule
 
 		return strpos($url, '/surveys/') === 0 &&
 			strpos($url, '__passthru=DataEntry%2Fimage_view.php') === false; // Prevent hooks from firing for survey logo URLs (and breaking them).
+	}
+
+	public function log($message, $parameters = [])
+	{
+		if (empty($message)) {
+			throw new Exception("A message is required for log entries.");
+		}
+
+		foreach ($parameters as $name => $value) {
+			if (isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$name])) {
+				throw new Exception("The '$name' parameter name is set automatically and cannot be overridden.");
+			}
+		}
+
+		// The IP could contain multiple comma separated addresses (if proxies are used).
+		// To accommodated at least three IPv4 addresses, the DB field is 100 chars long like the redcap_log_event table.
+		$ip = \System::clientIpAddress();
+		$username = ExternalModules::getUsername();
+		if (empty($ip)
+			|| empty($username) // Only log the ip if a user is logged in
+			|| $username == ExternalModules::SURVEY_RESPONDENT_USERNAME // Don't log IP for survey respondents
+		) {
+			$ip = 'null';
+		}
+		else{
+			$ip = "'" . db_real_escape_string($ip) . "'";
+		}
+
+		$projectId = $this->getProjectId();
+		if (empty($projectId)) {
+			$projectId = 'null';
+		}
+
+		$recordId = @$parameters['record'];
+		if (empty($recordId)) {
+			$recordId = $this->getRecordId();
+
+			if (empty($recordId)) {
+				$recordId = 'null';
+			}
+			else{
+				$recordId = "'" . db_real_escape_string($recordId) . "'";
+			}
+		}
+
+		$logValues = [];
+		$logValues['timestamp'] = 'now()';
+		$logValues['ui_id'] = "(select ui_id from redcap_user_information where username = '$username')";
+		$logValues['ip'] = $ip;
+		$logValues['external_module_id'] = "(select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}')";
+		$logValues['project_id'] = db_real_escape_string($projectId);
+		$logValues['record'] = $recordId;
+		$logValues['message'] = "'" . db_real_escape_string($message) . "'";
+
+		$this->query("
+			insert into redcap_external_modules_log
+				(
+					" . implode(",\n", array_keys($logValues)) . "				
+				)
+			values
+				(
+					" . implode(",\n", $logValues) . "
+				)
+		");
+
+		if (!empty($parameters)) {
+			$this->insertLogParameters(db_insert_id(), $parameters);
+		}
+	}
+
+	private function insertLogParameters($logId, $parameters)
+	{
+		$valuesSql = '';
+		foreach ($parameters as $name => $value) {
+			if (!empty($valuesSql)) {
+				$valuesSql .= ',';
+			}
+
+			$name = db_real_escape_string($name);
+			$value = db_real_escape_string($value);
+
+			$valuesSql .= "($logId, '$name', '$value')";
+		}
+
+		$this->query("insert into redcap_external_modules_log_parameters (log_id, name, value) VALUES $valuesSql");
+	}
+
+	public function queryLogs($sql = '')
+	{
+		return $this->query($this->formatLogQuery($sql));
+	}
+
+	public function removeLogs($sql)
+	{
+		$select = "select 1";
+		$sql = $this->formatLogQuery("$select where $sql");
+		$sql = substr_replace($sql, 'delete redcap_external_modules_log', 0, strlen($select));
+
+		return $this->query($sql);
+	}
+
+	private function formatLogQuery($sql)
+	{
+		$parser = new PHPSQLParser();
+		$parsed = $parser->parse($sql);
+
+		$fields = [];
+		$this->processPseudoQuery($parsed['SELECT'], $fields, true);
+		$this->processPseudoQuery($parsed['WHERE'], $fields, false);
+
+		$projectId = $this->getProjectId();
+		if (!empty($projectId)) {
+			$projectClause = " and redcap_external_modules_log.project_id = $projectId ";
+		}
+
+		$parsedStandardWhereClauses = $parser->parse("where redcap_external_modules_log.external_module_id = (select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}') $projectClause and ");
+		$parsed['WHERE'] = array_merge($parsedStandardWhereClauses['WHERE'], $parsed['WHERE']);
+
+		$creator = new PHPSQLCreator();
+		$select = $creator->create(['SELECT' => $parsed['SELECT']]);
+		$where = substr($creator->create($parsed), strlen($select));
+
+		$fields = array_unique($fields);
+		$joinUsername = false;
+		$parameterFields = [];
+		foreach ($fields as $field) {
+			if ($field == 'username') {
+				$joinUsername = true;
+			} else if (isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$field])) {
+				// do nothing
+			} else {
+				$parameterFields[] = $field;
+			}
+		}
+
+		$from = ' from redcap_external_modules_log';
+		foreach ($parameterFields as $field) {
+			$from .= "
+						left join redcap_external_modules_log_parameters $field on $field.name = '$field'
+						and $field.log_id = redcap_external_modules_log.log_id
+					";
+		}
+
+		if ($joinUsername) {
+			$from .= "
+						left join redcap_user_information on redcap_user_information.ui_id = redcap_external_modules_log.ui_id
+					";
+		}
+
+		$sql = implode(' ', [$select, $from, $where]);
+
+		return $sql;
+	}
+
+	private function processPseudoQuery(&$parsed, &$fields, $addAs)
+	{
+		for ($i = 0; $i < count($parsed); $i++) {
+			$item =& $parsed[$i];
+			$subtree =& $item['sub_tree'];
+
+			if (is_array($subtree)) {
+				$this->processPseudoQuery($subtree, $fields, $addAs);
+			} else if ($item['expr_type'] == 'colref') {
+				$field = $item['base_expr'];
+				$fields[] = $field;
+
+				if ($field === 'username') {
+					$newField = 'redcap_user_information.username';
+				} else if(isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$field])) {
+					$newField = "redcap_external_modules_log.$field";
+				} else {
+					$newField = "$field.value";
+
+					if ($addAs && $item['alias'] == false) {
+						$newField .= " as $field";
+					}
+				}
+
+				$item['base_expr'] = $newField;
+			}
+		}
+	}
+
+	public function getProjectId()
+	{
+		$pid = @$_GET['pid'];
+
+		// Require only digits to prevent sql injection.
+		if (ctype_digit($pid)) {
+			return $pid;
+		} else {
+			return null;
+		}
+	}
+
+	public function setRecordId($recordId)
+	{
+		$this->recordId = $recordId;
+	}
+
+	public function getRecordId()
+	{
+		return $this->recordId;
+	}
+
+	public static function init()
+	{
+		self::$RESERVED_PARAMETER_NAMES_FLIPPED = array_flip(self::RESERVED_PARAMETER_NAMES);
 	}
 }

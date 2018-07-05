@@ -44,6 +44,8 @@ class ExternalModules
 	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
 	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
 
+	const SURVEY_RESPONDENT_USERNAME = '[survey_respondent]';
+
 	// We can't write values larger than this to the database, or they will be truncated.
 	const SETTING_KEY_SIZE_LIMIT = 255;
 	const SETTING_SIZE_LIMIT = 16777215;
@@ -63,6 +65,8 @@ class ExternalModules
 	# path for the modules directory
 	public static $MODULES_BASE_PATH;
 	public static $MODULES_PATH;
+
+	private static $USERNAME;
 
 	# index is hook $name, then $prefix, then $version
 	private static $delayed;
@@ -1152,7 +1156,7 @@ class ExternalModules
 	# prefix is [institution]_[module]
 	# gets stored in database as module_id number
 	# translates prefix string into a module_id number
-	private static function getIdForPrefix($prefix)
+	public static function getIdForPrefix($prefix)
 	{
 		if(!isset(self::$idsByPrefix)){
 			$result = self::query("SELECT external_module_id, directory_prefix FROM redcap_external_modules");
@@ -1282,6 +1286,11 @@ class ExternalModules
 			$hookName = substr(self::$hookBeingExecuted, 7);
 		}
 
+		$recordId = null;
+		if (in_array($hookName, ['data_entry_form_top', 'data_entry_form', 'save_record', 'survey_page_top', 'survey_page', 'survey_complete'])) {
+			$recordId = $arguments[1];
+		}
+
 		$hookNames = array('redcap_'.$hookName, 'hook_'.$hookName);
 		
 		if(!self::hasPermission($prefix, $version, 'redcap_'.$hookName) && !self::hasPermission($prefix, $version, 'hook_'.$hookName)){
@@ -1301,6 +1310,7 @@ class ExternalModules
 		self::$versionBeingExecuted = $version;
 
 		$instance = self::getModuleInstance($prefix, $version);
+		$instance->setRecordId($recordId);
 		
 		foreach ($hookNames as $thisHook) {
 			if(method_exists($instance, $thisHook)){
@@ -1317,6 +1327,8 @@ class ExternalModules
 				return;
 			}
 		}
+
+		$instance->setRecordId(null);
 	}
 
 	private static function getProjectIdFromHookArguments($arguments)
@@ -2997,5 +3009,25 @@ class ExternalModules
 		);
 
 		return @$types[$extension];
+	}
+
+	public static function getUsername()
+	{
+		if (!empty(self::$USERNAME)) {
+			return self::$USERNAME;
+		} else if (defined(USERID)) {
+			return USERID;
+		} else {
+			return null;
+		}
+	}
+
+	public static function setUsername($username)
+	{
+		if (!self::isTesting()) {
+			throw new Exception("This method can only be used in unit tests.");
+		}
+
+		self::$USERNAME = $username;
 	}
 }
