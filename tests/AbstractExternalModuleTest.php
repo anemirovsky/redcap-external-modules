@@ -454,7 +454,7 @@ class AbstractExternalModuleTest extends BaseTest
 
 		ExternalModules::setUsername($username);
 		$_SERVER['HTTP_CLIENT_IP'] = '1.2.3.4';
-		$m->setRecordId(rand());
+		$m->setRecordId('abc-' . rand()); // We prepend a string to make sure alphanumeric record ids work.
 		$m->log($message, [
 			$paramName1 => $paramValue1,
 			$paramName2 => $paramValue2,
