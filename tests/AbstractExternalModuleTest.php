@@ -415,6 +415,7 @@ class AbstractExternalModuleTest extends BaseTest
 		$paramValue1 = rand();
 		$paramName2 = 'testParam2';
 		$paramValue2 = rand();
+		$paramName3 = 'testParam3';
 
 		$query = function () use ($m, $testingModuleId, $message, $paramName1, $paramName2) {
 			$results = $m->queryLogs("
@@ -456,7 +457,8 @@ class AbstractExternalModuleTest extends BaseTest
 		$m->setRecordId(rand());
 		$m->log($message, [
 			$paramName1 => $paramValue1,
-			$paramName2 => $paramValue2
+			$paramName2 => $paramValue2,
+			$paramName3 => null
 		]);
 
 		$rows = $query();
@@ -475,6 +477,7 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertEquals($m->getRecordId(), $row['record']);
 		$this->assertEquals($paramValue1, $row[$paramName1]);
 		$this->assertEquals($paramValue2, $row[$paramName2]);
+		$this->assertNull($row[$paramName3]);
 
 		$m->removeLogs("$paramName1 is null");
 		$rows = $query();

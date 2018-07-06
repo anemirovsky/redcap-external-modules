@@ -1129,6 +1129,11 @@ class AbstractExternalModule
 			if (isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$name])) {
 				throw new Exception("The '$name' parameter name is set automatically and cannot be overridden.");
 			}
+			else if($value === null){
+				// There's no point in storing null values in the database.
+				// If a parameter is missing, queries will return null for it anyway.
+				unset($parameters[$name]);
+			}
 		}
 
 		// The IP could contain multiple comma separated addresses (if proxies are used).
