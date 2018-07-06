@@ -1209,7 +1209,7 @@ class AbstractExternalModule
 		$this->query("insert into redcap_external_modules_log_parameters (log_id, name, value) VALUES $valuesSql");
 	}
 
-	public function queryLogs($sql = '')
+	public function queryLogs($sql)
 	{
 		return $this->query($this->formatLogQuery($sql));
 	}
