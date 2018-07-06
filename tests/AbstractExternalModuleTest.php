@@ -14,7 +14,7 @@ class AbstractExternalModuleTest extends BaseTest
 
 		// To delete all logs, we use a fake parameter to create a where clause that applies to all rows
 		// (since removeLogs() requires a where clause).
-		$m->removeLogs("some_fake_paramater != 'some fake value'");
+		$m->removeLogs("some_fake_paramater is null");
 	}
 
 	/**
