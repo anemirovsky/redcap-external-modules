@@ -1134,6 +1134,9 @@ class AbstractExternalModule
 				// If a parameter is missing, queries will return null for it anyway.
 				unset($parameters[$name]);
 			}
+			else if(strpos($name, "'") !== false){
+				throw new Exception("Single quotes are not allowed in parameter names.");
+			}
 		}
 
 		// The IP could contain multiple comma separated addresses (if proxies are used).
