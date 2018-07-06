@@ -1216,6 +1216,10 @@ class AbstractExternalModule
 
 	public function removeLogs($sql)
 	{
+		if(empty($sql)){
+			throw new Exception('You must specify a where clause.');
+		}
+
 		$select = "select 1";
 		$sql = $this->formatLogQuery("$select where $sql");
 		$sql = substr_replace($sql, 'delete redcap_external_modules_log', 0, strlen($select));
