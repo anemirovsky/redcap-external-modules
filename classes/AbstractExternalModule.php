@@ -1228,6 +1228,10 @@ class AbstractExternalModule
 		$parser = new PHPSQLParser();
 		$parsed = $parser->parse($sql);
 
+		if($parsed['SELECT'] === null){
+			throw new Exception("Queries must start with a 'select' statement.");
+		}
+
 		$fields = [];
 		$this->processPseudoQuery($parsed['SELECT'], $fields, true);
 		$this->processPseudoQuery($parsed['WHERE'], $fields, false);
