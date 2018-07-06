@@ -1267,8 +1267,11 @@ class AbstractExternalModule
 
 		$from = ' from redcap_external_modules_log';
 		foreach ($parameterFields as $field) {
+			// Needed for field names with spaces.
+			$fieldString = str_replace("`", "", $field);
+
 			$from .= "
-						left join redcap_external_modules_log_parameters $field on $field.name = '$field'
+						left join redcap_external_modules_log_parameters $field on $field.name = '$fieldString'
 						and $field.log_id = redcap_external_modules_log.log_id
 					";
 		}

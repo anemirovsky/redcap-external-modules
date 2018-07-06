@@ -577,6 +577,27 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertSame($maliciousSql, $row['malicious_param']);
 	}
 
+	function testLog_spacesInParameterNames()
+	{
+		$m = $this->getInstance();
+
+		$paramName = "some param";
+		$paramValue = "some value";
+
+		$m->log('test', [
+			$paramName => $paramValue
+		]);
+
+		$selectSql = "select `$paramName` where `$paramName` is not null order by `$paramName`";
+		$result = $m->queryLogs($selectSql);
+		$row = db_fetch_assoc($result);
+		$this->assertSame($paramValue, $row[$paramName]);
+
+		$m->removeLogs("`$paramName` is not null");
+		$result = $m->queryLogs($selectSql);
+		$this->assertNull(db_fetch_assoc($result));
+	}
+
 	function testQueryLogs_complexStatements()
 	{
 		$m = $this->getInstance();
