@@ -6,6 +6,17 @@ use \Exception;
 
 class AbstractExternalModuleTest extends BaseTest
 {
+	protected function setUp()
+	{
+		parent::setUp();
+
+		$m = self::getInstance();
+
+		// To delete all logs, we use a fake parameter to create a where clause that applies to all rows
+		// (since removeLogs() requires a where clause).
+		$m->removeLogs("some_fake_paramater != 'some fake value'");
+	}
+
 	/**
 	 * @doesNotPerformAssertions
 	 */
@@ -546,6 +557,21 @@ class AbstractExternalModuleTest extends BaseTest
 				]);
 			}, 'parameter name is set automatically and cannot be overridden');
 		}
+	}
+
+	function testLog_escapedCharacters()
+	{
+		$m = $this->getInstance();
+		$maliciousSql = "'; delete from everything";
+		$m->log($maliciousSql, [
+			"malicious_param" => $maliciousSql
+		]);
+
+		$selectSql = 'select message, malicious_param order by timestamp desc limit 1';
+		$result = $m->queryLogs($selectSql);
+		$row = db_fetch_assoc($result);
+		$this->assertSame($maliciousSql, $row['message']);
+		$this->assertSame($maliciousSql, $row['malicious_param']);
 	}
 
 	function testQueryLogs_complexStatements()
