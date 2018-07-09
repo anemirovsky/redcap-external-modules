@@ -25,6 +25,8 @@ if (class_exists('ExternalModules\ExternalModules')) {
 }
 
 use \Exception;
+use \RecursiveDirectoryIterator;
+use \RecursiveIteratorIterator;
 
 class ExternalModules
 {
@@ -2621,27 +2623,20 @@ class ExternalModules
 	}
 	
 	# general method to delete a directory by first deleting all files inside it
-	public static function rrmdir($dirPath, $recursion=1) 
+	# Copied from https://stackoverflow.com/questions/3349753/delete-directory-with-files-in-it
+	private static function rrmdir($dir)
 	{
-		if (!is_dir($dirPath) || $recursion > 25) return false;
-		if (substr($dirPath, strlen($dirPath) - 1, 1) != DS) {
-			$dirPath .= DS;
-		}
-		if (rmdir($dirPath)) return true;
-		$files = getDirFiles($dirPath);
-		foreach ($files as $file) {
-			$file = $dirPath . $file;
-			if (is_dir($file)) {
-				self::rrmdir($file, $recursion+1);
+		$it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+		$files = new RecursiveIteratorIterator($it,
+					 RecursiveIteratorIterator::CHILD_FIRST);
+		foreach($files as $file) {
+			if ($file->isDir()){
+				rmdir($file->getRealPath());
 			} else {
-				unlink($file);
+				unlink($file->getRealPath());
 			}
 		}
-		$deleteSuccess = rmdir($dirPath);
-		if (!$deleteSuccess) {
-			$deleteSuccess = self::rrmdir($dirPath, $recursion+1);
-		}
-		return $deleteSuccess;
+		rmdir($dir);
 	}
 	
 	// Find the redcap_connect.php file and require it
