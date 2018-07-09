@@ -373,7 +373,18 @@ setUserSetting($key, $value) |  Sets the setting specified by the key to the giv
 validateSettings($settings) | Override this method in order to validate settings at save time.  If a non-empty error message string is returned, it will be displayed to the user, and settings will NOT be saved. 
 
 ### JavaScript Module Object
-A JavaScript version of the module object can be created by calling the PHP module object's `initializeJavascriptModuleObject()` method at any point in any hook.
+A JavaScript version of the module object can be created by calling the PHP module object's `initializeJavascriptModuleObject()` method at any point in any hook.  It will generate a JavaScript object matching the following pattern:
+ 
+```ExternalModules.PHPNamespace.PHPClassName```
+
+For example, the `log()` JavaScript method can be called on the supplied configuration example modules as follows:
+
+```
+<script>
+	ExternalModules.Vanderbilt.ConfigurationExampleExternalModule.log('Hello from JavaScript!')
+</script>
+
+```
 
 Method  | Description
 ------- | -----------
