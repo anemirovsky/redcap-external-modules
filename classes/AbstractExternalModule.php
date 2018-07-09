@@ -1119,6 +1119,52 @@ class AbstractExternalModule
 			strpos($url, '__passthru=DataEntry%2Fimage_view.php') === false; // Prevent hooks from firing for survey logo URLs (and breaking them).
 	}
 
+	public function initializeJavascriptModuleObject()
+	{
+		$jsObjectParts = explode('\\', get_class($this));
+
+		// Remove the class name, since it's always the same as it's parent namespace.
+		array_pop($jsObjectParts);
+
+		// Prepend "ExternalModules" to contain all module namespaces.
+		array_unshift($jsObjectParts, 'ExternalModules');
+
+		$jsObject = implode('.', $jsObjectParts);
+		?>
+		<script>
+			$(function(){
+				// Create the module object, and any missing parent objects.
+				var parent = window
+				;<?=json_encode($jsObjectParts)?>.forEach(function(part){
+					if(parent[part] === undefined){
+						parent[part] = {}
+					}
+
+					parent = parent[part]
+				})
+
+				<?=$jsObject?>.PREFIX = <?=json_encode($this->PREFIX)?>
+
+				<?=$jsObject?>.log = function(message, parameters){
+					$.ajax({
+						'type': 'POST',
+						'url': "<?=APP_URL_EXTMOD?>/manager/ajax/log.php?prefix=" + this.PREFIX,
+						'data': JSON.stringify({
+							message: message,
+							parameters: parameters
+						}),
+						'success': function(data){
+							if(data !== 'success'){
+								console.log("An error occurred while calling the log API!")
+							}
+						}
+					})
+				}
+			})
+		</script>
+		<?php
+	}
+
 	public function log($message, $parameters = [])
 	{
 		if (empty($message)) {

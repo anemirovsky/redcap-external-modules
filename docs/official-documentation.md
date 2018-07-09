@@ -31,9 +31,7 @@ redcap
 
 #### 1) Module class
 
-Your module class is the central PHP file that will run all the business logic for the module. You may actually have many other PHP files (classes or include files), as well as JavaScript, CSS, etc. All other such files are optional, but the module class itself is necessary and drives the module.
-
-There is a class named *AbstractExternalModule* that is included in the External Modules framework, and it provides all the developer methods documented further down on this page that you can use in your module.  The methods documented further down are the only portion of the External Modules framework that is publicly supported.  Do not reference any other methods or files (like the *ExternalModules* class), as they could change at any time.  Your module class must extend the *AbstractExternalModule* class, as seen below in an example whose class file is named `MyModuleClass.php`.
+Each module must define a module class that extends `ExternalModules\AbstractExternalModule` (see the example below).  Your module class is the central PHP file that will run all the business logic for the module. You may have many other PHP files (classes or include files), as well as JavaScript, CSS, etc. All other such files are optional, but the module class itself is necessary and drives the module.
 
 ``` php
 <?php
@@ -324,7 +322,10 @@ $value = $module->getProjectSetting('my-project-setting');
 
 ### Available developer methods in External Modules
 
-Listed below are the publicly supported methods that module creators may utilize in their modules. Do not reference any other methods or files (like the *ExternalModules* class) in any module, as they could change at any time. Since the module class will extend the *AbstractExternalModule* class, these methods can be called inside the module class using **$this** (e.g., `$this->getModuleName()`).
+Listed below are the publicly supported methods that module creators may utilize in their modules. Do not reference any other methods or files (like the *ExternalModules* class) as they could change at any time.
+
+#### PHP Module Object
+Since each module's main class will extend *AbstractExternalModule*.  The following built-in methods are available on each module's main class.  They can be called by using **$this** (e.g., `$this->getModuleName()`).
 
 Method  | Description
 ------- | -----------
@@ -353,6 +354,7 @@ getSystemSetting($key) | Get the value stored systemwide for the specified key.
 getUrl($path [, $noAuth=false [, $useApiEndpoint=false]]) | Get the url to a resource (php page, js/css file, image etc.) at the specified path relative to the module directory. A `$module` variable representing an instance of your module class will automatically be available in PHP files.  If the $noAuth parameter is set to true, then "&NOAUTH" will be appended to the URL, which disables REDCap's authentication for that PHP page (assuming the link's URL in config.json contains "?NOAUTH"). Also, if you wish to obtain an alternative form of the URL that does not contain the REDCap version directory (e.g., https://example.com/redcap/redcap_vX.X.X/ExternalModules/?prefix=your_module&page=index&pid=33), then set $useApiEndpoint=true, which will return a version-less URL using the API end-point (e.g., https://example.com/redcap/api/?prefix=your_module&page=index&pid=33). Both links will work identically.
 getUserSetting($key) | Returns the value stored for the specified key for the current user and project.  Null is always returned on surveys and NOAUTH pages.
 hasPermission($permissionName) | checks whether the current External Module has permission for $permissionName
+initializeJavascriptModuleObject() | Returns a JavaScript block that initializes the JavaScript version of the module object (documented below). 
 isSurveyPage() | Returns true if the current page is a survey.  This is primarily useful in the **redcap_every_page_before_render** hook.
 log($message[, $parameters]) | **BETA:** *This feature may change.*  Log a message and optional array of key value pairs for later retrieval using the **queryLogs()** method.  Parameters for the current **user** and **timestamp** will automatically be stored, even if the **$parameters** argument is omitted.
 query($sql) | A thin wrapper around REDCap's db_query() that includes automatic error detection and reporting (including killed queries). 
@@ -369,6 +371,16 @@ setProjectSettings($settings[, $pid]) | Saves all project settings (to be used w
 setSystemSetting($key,&nbsp;$value) | Set the setting specified by the key to the specified value systemwide (shared by all projects).
 setUserSetting($key, $value) |  Sets the setting specified by the key to the given value for the current user and project.  This method does nothing on surveys and NOAUTH pages.  
 validateSettings($settings) | Override this method in order to validate settings at save time.  If a non-empty error message string is returned, it will be displayed to the user, and settings will NOT be saved. 
+
+### JavaScript Module Object
+A JavaScript version of the module object can be created by calling the PHP module object's `initializeJavascriptModuleObject()` method at any point in any hook.
+
+Method  | Description
+------- | -----------
+log() | See the description for the PHP version of this method (above).
+
+add docs for Javascript class
+	change parts that say "AbstractExternalModule is only class to reference"
 
 ### Utilizing Cron Jobs for Modules
 
