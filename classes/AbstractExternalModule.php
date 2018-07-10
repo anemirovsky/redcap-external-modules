@@ -1130,6 +1130,11 @@ class AbstractExternalModule
 		array_unshift($jsObjectParts, 'ExternalModules');
 
 		$jsObject = implode('.', $jsObjectParts);
+		$logUrl = APP_URL_EXTMOD . "/manager/ajax/log.php?prefix=" . $this->PREFIX;
+		$pid = $this->getProjectId();
+		if(!empty($pid)){
+			$logUrl .= "&pid=$pid";
+		}
 		?>
 		<script>
 			$(function(){
@@ -1143,12 +1148,10 @@ class AbstractExternalModule
 					parent = parent[part]
 				})
 
-				<?=$jsObject?>.PREFIX = <?=json_encode($this->PREFIX)?>
-
 				<?=$jsObject?>.log = function(message, parameters){
 					$.ajax({
 						'type': 'POST',
-						'url': "<?=APP_URL_EXTMOD?>/manager/ajax/log.php?prefix=" + this.PREFIX,
+						'url': "<?=$logUrl?>",
 						'data': JSON.stringify({
 							message: message,
 							parameters: parameters
