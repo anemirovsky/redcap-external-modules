@@ -21,8 +21,8 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title">Disable module? <span class="module-name"></span></h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 				Are you sure you wish to disable this module 
@@ -37,14 +37,14 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 </div>
 
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title clearfix">
-					<div class="pull-left">Available Modules</div>
-					<div class="pull-right" style="margin-right:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules"></div>
+					<div class="float-left">Available Modules</div>
+					<div class="float-right" style="margin-left:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules"></div>
 				</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 				<form>
@@ -55,11 +55,11 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 </div>
 
 <div id="external-modules-usage-modal" class="modal fade" role="dialog" data-backdrop="static">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title"></h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 			</div>
@@ -155,7 +155,7 @@ $moduleDialogBtnImg = SUPER_USER ? "glyphicon-plus-sign" : "glyphicon-info-sign"
 	</button> &nbsp; 
 <?php } ?>
 <?php if (SUPER_USER && !isset($_GET['pid'])) { ?>
-	<button id="external-modules-download-modules-button" class="btn btn-primary btn-sm">
+	<button id="external-modules-download-modules-button" class="btn btn-primaryrc btn-sm">
 		<span class="glyphicon glyphicon-save" aria-hidden="true"></span>
 		View modules available in the REDCap Repo
 	</button>
@@ -177,14 +177,14 @@ $moduleDialogBtnImg = SUPER_USER ? "glyphicon-plus-sign" : "glyphicon-info-sign"
 <br>
 
 <h4 class="clearfix" style="max-width: 800px;">
-	<div class="pull-left"><b>
+	<div class="float-left"><b>
 	<?php if (isset($_GET['pid'])) { ?>
 	Currently Enabled Modules
 	<?php } else { ?>
 	Modules Currently Available on this System
 	<?php } ?>
 	</b></div>
-	<div class="pull-right"><input type="text" id="enabled-modules-search" class="quicksearch" placeholder="Search enabled modules"></div>
+	<div class="float-right"><input type="text" id="enabled-modules-search" class="quicksearch" placeholder="Search enabled modules"></div>
 </h4>
 
 <script type="text/javascript">

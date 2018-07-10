@@ -61,7 +61,7 @@ require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php
 					</td>
 					<td class="external-modules-action-buttons">
 						<button class='btn btn-success btn-xs enable-button'><span class="glyphicon <?=$enableButtonIcon?>" aria-hidden="true"></span> <?=$enableButtonText?></button> &nbsp;
-						<button class='btn btn-default btn-xs disable-button' <?=$deleteButtonDisabled?>><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete module</button>
+						<button class='btn btn-defaultrc btn-xs disable-button' <?=$deleteButtonDisabled?>><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete module</button>
 					</td>
 				</tr>
 				<?php
