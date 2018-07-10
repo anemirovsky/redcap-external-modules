@@ -3015,7 +3015,7 @@ class ExternalModules
 	{
 		if (!empty(self::$USERNAME)) {
 			return self::$USERNAME;
-		} else if (defined(USERID)) {
+		} else if (defined('USERID')) {
 			return USERID;
 		} else {
 			return null;
