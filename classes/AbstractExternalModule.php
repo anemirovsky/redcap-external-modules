@@ -1130,11 +1130,10 @@ class AbstractExternalModule
 		array_unshift($jsObjectParts, 'ExternalModules');
 
 		$jsObject = implode('.', $jsObjectParts);
-		$logUrl = APP_URL_EXTMOD . "/manager/ajax/log.php?prefix=" . $this->PREFIX;
+
 		$pid = $this->getProjectId();
-		if(!empty($pid)){
-			$logUrl .= "&pid=$pid";
-		}
+		$record = $this->getRecordId();
+		$logUrl = APP_URL_EXTMOD . "/manager/ajax/log.php?prefix=" . $this->PREFIX . "&pid=$pid&record=$record";
 		?>
 		<script>
 			$(function(){

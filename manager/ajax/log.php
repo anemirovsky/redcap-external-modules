@@ -3,6 +3,7 @@ namespace ExternalModules;
 require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php';
 
 $module = ExternalModules::getModuleInstance($_GET['prefix']);
+$module->setRecordId($_GET['record']);
 
 $data = json_decode(file_get_contents('php://input'), true);
 
