@@ -1061,6 +1061,7 @@ class ExternalModules
 							JOIN redcap_projects p
 								ON s.project_id = p.project_id
 							WHERE m.directory_prefix = '$prefix'
+								and p.date_deleted IS NULL
 								and `key` = '" . self::KEY_ENABLED . "'
 								and value = 'true'");
 	}
