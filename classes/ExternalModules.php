@@ -2567,6 +2567,11 @@ class ExternalModules
 	}
 
 	public static function deleteModuleDirectory($moduleFolderName=null, $bypass=false){
+		if(empty($moduleFolderName)){
+			// Prevent the entire modules directory from being deleted.
+			throw new Exception("You must specify a module to delete!");
+		}
+
 		// Ensure user is super user
 		if (!$bypass && (!defined("SUPER_USER") || !SUPER_USER)) return "0";
 		// Set modules directory path
