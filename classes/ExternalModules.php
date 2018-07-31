@@ -2112,6 +2112,9 @@ class ExternalModules
 		else if($configRow['type'] == 'sub_settings') {
 			foreach ($configRow['sub_settings'] as $subConfigKey => $subConfigRow) {
 				$configRow['sub_settings'][$subConfigKey] = self::getAdditionalFieldChoices($subConfigRow,$pid);
+				if($configRow['super-users-only']) {
+					$configRow['sub_settings'][$subConfigKey]['super-users-only'] = $configRow['super-users-only'];
+				}
 				if(!isset($configRow['source']) && $configRow['sub_settings'][$subConfigKey]['source']) {
 					$configRow['source'] = "";
 				}
