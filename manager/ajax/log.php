@@ -5,7 +5,7 @@ use Exception;
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-$noAuth = isset($data['noAuth']);
+$noAuth = $data['noAuth'];
 if($noAuth){
 	define('NOAUTH', true);
 }
