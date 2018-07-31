@@ -50,6 +50,8 @@ class ExternalModules
 	const SETTING_KEY_SIZE_LIMIT = 255;
 	const SETTING_SIZE_LIMIT = 16777215;
 
+	const EXTERNAL_MODULES_TEMPORARY_RECORD_ID = 'external-module-temporary-record-id';
+
 	// The minimum required PHP version for External Modules to run
 	const MIN_PHP_VERSION = '5.4.0';
 
@@ -3029,5 +3031,15 @@ class ExternalModules
 		}
 
 		self::$USERNAME = $username;
+	}
+
+	public static function generateTemporaryRecordId()
+	{
+		return implode('-', [self::EXTERNAL_MODULES_TEMPORARY_RECORD_ID, time(), rand()]);
+	}
+
+	public static function isTemporaryRecordId($recordId)
+	{
+		return strpos($recordId, self::EXTERNAL_MODULES_TEMPORARY_RECORD_ID) === 0;
 	}
 }
