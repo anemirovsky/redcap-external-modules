@@ -1119,7 +1119,7 @@ class AbstractExternalModule
 			strpos($url, '__passthru=DataEntry%2Fimage_view.php') === false; // Prevent hooks from firing for survey logo URLs (and breaking them).
 	}
 
-	public function isDataEntryPage()
+	private function isDataEntryPage()
 	{
 		return strpos($_SERVER['REQUEST_URI'], APP_PATH_WEBROOT . 'DataEntry') === 0;
 	}
