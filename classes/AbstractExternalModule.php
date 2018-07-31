@@ -1142,7 +1142,7 @@ class AbstractExternalModule
 		$noAuth = defined('NOAUTH');
 		?>
 		<script>
-			$(function(){
+			(function(){
 				var recordId = null;
 				<?php if(empty($recordId) && ($this->isSurveyPage() || $this->isDataEntryPage())){ ?>
 					// We're creating a new record, but don't have an id yet.
@@ -1200,7 +1200,7 @@ class AbstractExternalModule
 						}
 					})
 				}
-			})
+			})()
 		</script>
 		<?php
 	}
