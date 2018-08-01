@@ -359,7 +359,7 @@ isSurveyPage() | Returns true if the current page is a survey.  This is primaril
 log($message[, $parameters]) | **BETA:** *This feature may change.*  Log a message and optional array of key value pairs for later retrieval using the **queryLogs()** method.  Some parameters/columns are stored automatically, even if the **$parameters** argument is omitted (see **queryLogs()** for more details).
 query($sql) | A thin wrapper around REDCap's db_query() that includes automatic error detection and reporting (including killed queries). 
 queryLogs($sql) | **BETA:** *This feature may change.*   Queries log entries added via the **log()** method using SQL-like syntax with the "from" portion omitted.  Queries can include standard "select", "where", "order by", and "group by" clauses.  Available columns include **log_id**, **timestamp**, **user**, **ip**, **project_id**, **record**, **message**, and any parameter name passed to the **log()** method.  All columns must be specified explicitly ("select \*" syntax is not supported).  Here are some query examples:*<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select timestamp, user where message = 'some message'<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select message, ip<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timestamp > '2017-07-07'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and user in ('joe', 'tom')<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or some_parameter like '%abc%'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;order by timestamp desc*<br><br>Queries are currently limited to the current module and project (if detected).  Depending on feedback, this could change in the future.  Also, the log table can be manually queried (this method does not have to be used). 
-removeLogs($sql) | Removes log entries matching the current module, current project (if detected), and the specified sql "where" clause.
+removeLogs($sql) | **BETA:** Removes log entries matching the current module, current project (if detected), and the specified sql "where" clause.
 removeProjectSetting($key&nbsp;[,&nbsp;$pid]) | Remove the value stored for this project and the specified key.  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead. 
 removeSystemSetting($key) | Removes the value stored systemwide for the specified key.
 removeUserSetting($key) | Removes the value stored for the specified key for the current user and project.  This method does nothing on surveys and NOAUTH pages.
@@ -373,7 +373,7 @@ setSystemSetting($key,&nbsp;$value) | Set the setting specified by the key to th
 setUserSetting($key, $value) |  Sets the setting specified by the key to the given value for the current user and project.  This method does nothing on surveys and NOAUTH pages.  
 validateSettings($settings) | Override this method in order to validate settings at save time.  If a non-empty error message string is returned, it will be displayed to the user, and settings will NOT be saved. 
 
-### JavaScript Module Object
+### **BETA:** JavaScript Module Object
 A JavaScript version of the module object can be created by calling the PHP module object's `initializeJavascriptModuleObject()` method at any point in any hook.  It will generate a JavaScript object matching the following pattern:
  
 ```ExternalModules.PHPNamespace.PHPClassName```
