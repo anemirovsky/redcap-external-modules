@@ -2566,7 +2566,7 @@ class ExternalModules
 		// Log this event
 		if (!$bypass) \REDCap::logEvent("Download external module \"$moduleFolderName\" from repository");
 		// Give success message
-		return "<div class='clearfix'><div class='pull-left'><img src='".APP_PATH_IMAGES."check_big.png'></div><div class='pull-left' style='width:360px;margin:8px 0 0 20px;color:green;font-weight:600;'>The module was successfully downloaded to the REDCap server, and can now be enabled.</div></div>";
+		return "<div class='clearfix'><div class='float-left'><img src='".APP_PATH_IMAGES."check_big.png'></div><div class='float-left' style='width:360px;margin:8px 0 0 20px;color:green;font-weight:600;'>The module was successfully downloaded to the REDCap server, and can now be enabled.</div></div>";
 	}
 
 	public static function deleteModuleDirectory($moduleFolderName=null, $bypass=false){
