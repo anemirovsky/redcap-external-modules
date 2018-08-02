@@ -80,6 +80,7 @@ class ExternalModules
 	private static $hookBeingExecuted;
 	private static $versionBeingExecuted;
 	private static $currentQuery = null;
+	private static $temporaryRecordId;
 
 	private static $initialized = false;
 	private static $activeModulePrefix;
@@ -3038,13 +3039,52 @@ class ExternalModules
 		self::$USERNAME = $username;
 	}
 
-	public static function generateTemporaryRecordId()
+	public static function getTemporaryRecordId()
 	{
-		return implode('-', [self::EXTERNAL_MODULES_TEMPORARY_RECORD_ID, time(), rand()]);
+		return self::$temporaryRecordId;
+	}
+
+	private static function setTemporaryRecordId($temporaryRecordId)
+	{
+		self::$temporaryRecordId = $temporaryRecordId;
+	}
+
+	public function sharedSurveyAndDataEntryActions($recordId)
+	{
+		if (empty($recordId) && (self::isSurveyPage() || self::isDataEntryPage())) {
+			// We're creating a new record, but don't have an id yet.
+			// We must create a temporary record id and include it in the form so it can be used to retroactively change logs to the actual record id once it exists.
+			$temporaryRecordId = implode('-', [self::EXTERNAL_MODULES_TEMPORARY_RECORD_ID, time(), rand()]);
+			self::setTemporaryRecordId($temporaryRecordId);
+			?>
+			<script>
+				(function () {
+					$('#form').append($('<input>').attr({
+						type: 'hidden',
+						name: <?=json_encode(ExternalModules::EXTERNAL_MODULES_TEMPORARY_RECORD_ID)?>,
+						value: <?=json_encode($temporaryRecordId)?>
+					}))
+				})()
+			</script>
+			<?php
+		}
 	}
 
 	public static function isTemporaryRecordId($recordId)
 	{
 		return strpos($recordId, self::EXTERNAL_MODULES_TEMPORARY_RECORD_ID) === 0;
+	}
+
+	public function isSurveyPage()
+	{
+		$url = $_SERVER['REQUEST_URI'];
+
+		return strpos($url, '/surveys/') === 0 &&
+			strpos($url, '__passthru=DataEntry%2Fimage_view.php') === false; // Prevent hooks from firing for survey logo URLs (and breaking them).
+	}
+
+	private function isDataEntryPage()
+	{
+		return strpos($_SERVER['REQUEST_URI'], APP_PATH_WEBROOT . 'DataEntry') === 0;
 	}
 }

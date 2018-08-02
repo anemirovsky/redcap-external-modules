@@ -1113,15 +1113,7 @@ class AbstractExternalModule
 
 	public function isSurveyPage()
 	{
-		$url = $_SERVER['REQUEST_URI'];
-
-		return strpos($url, '/surveys/') === 0 &&
-			strpos($url, '__passthru=DataEntry%2Fimage_view.php') === false; // Prevent hooks from firing for survey logo URLs (and breaking them).
-	}
-
-	private function isDataEntryPage()
-	{
-		return strpos($_SERVER['REQUEST_URI'], APP_PATH_WEBROOT . 'DataEntry') === 0;
+		return ExternalModules::isSurveyPage();
 	}
 
 	public function initializeJavascriptModuleObject()
@@ -1137,38 +1129,18 @@ class AbstractExternalModule
 		$jsObject = implode('.', $jsObjectParts);
 
 		$pid = $this->getProjectId();
-		$recordId = $this->getRecordId();
 		$logUrl = APP_URL_EXTMOD . "manager/ajax/log.php?prefix=" . $this->PREFIX . "&pid=$pid";
 		$noAuth = defined('NOAUTH');
+
+		$recordId = $this->getRecordIdOrTemporaryRecordId();
+		if($noAuth && !ExternalModules::isTemporaryRecordId($recordId)){
+			// Don't sent the actual record id, since it shouldn't be trusted on non-authenticated requests anyway.
+			$recordId = null;
+		}
+
 		?>
 		<script>
 			(function(){
-				var recordId = null;
-				<?php if(empty($recordId) && ($this->isSurveyPage() || $this->isDataEntryPage())){ ?>
-					// We're creating a new record, but don't have an id yet.
-					// We must create a temporary record id to use for logs until the actual record id is created.
-
-					var form = $('#form')
-					var fieldName = <?=json_encode(ExternalModules::EXTERNAL_MODULES_TEMPORARY_RECORD_ID)?> + ''
-					var input = form.find('input[name=' + fieldName + ']')
-
-					// Only use the first temporary record id generated (one will be generated per module).
-					if(input.length === 0){
-						input = $('<input>').attr({
-							type: 'hidden',
-							name: fieldName,
-							value: <?=json_encode(ExternalModules::generateTemporaryRecordId())?>
-						})
-
-						$('#form').append(input)
-					}
-
-					recordId = input.val()
-				<?php } else if(!$noAuth) {?>
-					// The user is authenticated, so we can trust that the record id wasn't spoofed.
-					recordId = <?=json_encode($recordId)?>;
-				<?php } ?>
-
 				// Create the module object, and any missing parent objects.
 				var parent = window
 				;<?=json_encode($jsObjectParts)?>.forEach(function(part){
@@ -1186,7 +1158,7 @@ class AbstractExternalModule
 						'data': JSON.stringify({
 							message: message
 							,parameters: parameters
-							,recordId: recordId
+							,recordId: <?=json_encode($recordId)?>
 							,noAuth: <?=json_encode($noAuth)?>
 							<?php if($this->isSurveyPage()) { ?>
 								,surveyHash: <?=json_encode($_GET['s'])?>
@@ -1246,7 +1218,7 @@ class AbstractExternalModule
 
 		$recordId = @$parameters['record'];
 		if (empty($recordId)) {
-			$recordId = $this->getRecordId();
+			$recordId = $this->getRecordIdOrTemporaryRecordId();
 
 			if (empty($recordId)) {
 				$recordId = 'null';
@@ -1425,6 +1397,17 @@ class AbstractExternalModule
 	public function getRecordId()
 	{
 		return $this->recordId;
+	}
+
+	public function getRecordIdOrTemporaryRecordId()
+	{
+		$recordId = $this->getRecordId();
+		if(empty($recordId)){
+			// Use the temporary record id if it exists.
+			$recordId = ExternalModules::getTemporaryRecordId();
+		}
+
+		return $recordId;
 	}
 
 	public static function init()
