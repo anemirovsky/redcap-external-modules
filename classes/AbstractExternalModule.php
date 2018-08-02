@@ -380,7 +380,8 @@ class AbstractExternalModule
 					FROM redcap_surveys_participants p, redcap_surveys_response r
 					WHERE p.survey_id = '$surveyId'
 						AND p.participant_id = r.participant_id
-						AND r.record = '".prep($recordId)."'";
+						AND r.record = '".prep($recordId)."'
+						AND p.event_id = '".prep($eventId)."'";
 
 			$q = db_query($sql);
 			$rows = [];
