@@ -1195,6 +1195,11 @@ class AbstractExternalModule
 			else if(strpos($name, "'") !== false){
 				throw new Exception("Single quotes are not allowed in parameter names.");
 			}
+
+			$type = gettype($value);
+			if(!in_array($type, ['boolean', 'integer', 'double', 'string', 'NULL'])){
+				throw new Exception("The type '$type' for the '$name' parameter is not supported.");
+			}
 		}
 
 		// The IP could contain multiple comma separated addresses (if proxies are used).
