@@ -2449,7 +2449,7 @@ class ExternalModules
 			$module_name = $module['name']."_v".$module['version'];
 			$links .= "<div id='repo-updates-modid-$id'><button class='btn btn-success btn-xs' onclick=\"window.location.href='".APP_URL_EXTMOD."manager/control_center.php?download_module_id=$id&download_module_title="
 				   .  rawurlencode($module['title']." ($module_name)")."&download_module_name=$module_name';\">"
-				   .  "<span class='glyphicon glyphicon-save'></span> {$lang['global_125']}</button> {$module['title']} v{$module['version']}</div>";
+				   .  "<span class='fas fa-download'></span> {$lang['global_125']}</button> {$module['title']} v{$module['version']}</div>";
 		}
 		print  "<div class='yellow repo-updates'>
 					<div style='color:#A00000;'>

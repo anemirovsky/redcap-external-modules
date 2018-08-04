@@ -13,7 +13,7 @@ ExternalModules::storeREDCapRepoUpdatesInConfig(@$_GET['module_updates'], !isset
 	</div>	
 	<div class="float-right" style="margin-top:5px;">
 		<button id="external-modules-add-custom-text-button" class="btn btn-defaultrc btn-xs">
-			<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+			<i class="fas fa-pencil-alt"></i>
 			Set custom text for Project Module Manager page
 		</button>
 	</div>

@@ -144,19 +144,19 @@ if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
 
 $displayModuleDialogBtn = (SUPER_USER || ExternalModules::hasDiscoverableModules());
 $moduleDialogBtnText = SUPER_USER ? "Enable a module" : "View available modules";
-$moduleDialogBtnImg = SUPER_USER ? "glyphicon-plus-sign" : "glyphicon-info-sign";
+$moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 
 ?>
 <br>
 <?php if($displayModuleDialogBtn) { ?>
 	<button id="external-modules-enable-modules-button" class="btn btn-success btn-sm">
-		<span class="glyphicon <?=$moduleDialogBtnImg?>" aria-hidden="true"></span>
+		<span class="<?=$moduleDialogBtnImg?>" aria-hidden="true"></span>
 		<?=$moduleDialogBtnText?>
 	</button> &nbsp; 
 <?php } ?>
 <?php if (SUPER_USER && !isset($_GET['pid'])) { ?>
 	<button id="external-modules-download-modules-button" class="btn btn-primaryrc btn-sm">
-		<span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+		<span class="fas fa-download" aria-hidden="true"></span>
 		View modules available in the REDCap Repo
 	</button>
 	<form id="download-new-mod-form" action="<?=APP_URL_EXTMOD_LIB?>login.php" method="post" enctype="multipart/form-data">
@@ -272,7 +272,7 @@ $moduleDialogBtnImg = SUPER_USER ? "glyphicon-plus-sign" : "glyphicon-info-sign"
 
 	$documentationUrl = ExternalModules::getDocumentationUrl($prefix);
 	if(!empty($documentationUrl)){
-		?><a href='<?=$documentationUrl?>' style="display: block; margin-top: 7px" target="_blank"><i class='glyphicon glyphicon-file' style="margin-right: 5px"></i>View Documentation</a><?php
+		?><a href='<?=$documentationUrl?>' style="display: block; margin-top: 7px" target="_blank"><i class='fas fa-file' style="margin-right: 5px"></i>View Documentation</a><?php
 	}
 
     $module_instance = ExternalModules::getModuleInstance($prefix);
