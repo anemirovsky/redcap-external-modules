@@ -7,11 +7,11 @@ ExternalModules::storeREDCapRepoUpdatesInConfig(@$_GET['module_updates'], !isset
 ?>
 
 <h4 style="margin-top:0;" class="clearfix">
-	<div class="float-left">
+	<div class="pull-left float-left">
 		<img src='../images/puzzle_medium.png'>
 		External Modules - Module Manager
 	</div>	
-	<div class="float-right" style="margin-top:5px;">
+	<div class="pull-right float-right" style="margin-top:5px;">
 		<button id="external-modules-add-custom-text-button" class="btn btn-defaultrc btn-xs">
 			<i class="fas fa-pencil-alt"></i>
 			Set custom text for Project Module Manager page

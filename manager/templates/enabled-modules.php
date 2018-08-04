@@ -155,7 +155,7 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 	</button> &nbsp; 
 <?php } ?>
 <?php if (SUPER_USER && !isset($_GET['pid'])) { ?>
-	<button id="external-modules-download-modules-button" class="btn btn-primaryrc btn-sm">
+	<button id="external-modules-download-modules-button" class="btn btn-primary btn-primaryrc btn-sm">
 		<span class="fas fa-download" aria-hidden="true"></span>
 		View modules available in the REDCap Repo
 	</button>
