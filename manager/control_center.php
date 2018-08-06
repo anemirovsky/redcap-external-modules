@@ -7,13 +7,13 @@ ExternalModules::storeREDCapRepoUpdatesInConfig(@$_GET['module_updates'], !isset
 ?>
 
 <h4 style="margin-top:0;" class="clearfix">
-	<div class="pull-left">
+	<div class="pull-left float-left">
 		<img src='../images/puzzle_medium.png'>
 		External Modules - Module Manager
 	</div>	
-	<div class="pull-right" style="margin-top:5px;">
+	<div class="pull-right float-right" style="margin-top:5px;">
 		<button id="external-modules-add-custom-text-button" class="btn btn-defaultrc btn-xs">
-			<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+			<i class="fas fa-pencil-alt"></i>
 			Set custom text for Project Module Manager page
 		</button>
 	</div>
@@ -35,11 +35,11 @@ ExternalModules::safeRequireOnce('manager/templates/enabled-modules.php');
 ?>
 
 <div id="external-modules-enable-modal" class="modal fade" role="dialog" data-backdrop="static">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close close-button" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title">Enable Module: <span class="module-name"></span></h4>
+				<button type="button" class="close close-button" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 				<div id="external-modules-enable-modal-error"></div>
@@ -55,11 +55,11 @@ ExternalModules::safeRequireOnce('manager/templates/enabled-modules.php');
 </div>
 
 <div id="external-modules-configure-modal" class="modal fade" role="dialog" data-backdrop="static">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title">Configure Module: <span class="module-name"></span></h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 				<table class="table table-no-top-row-border">

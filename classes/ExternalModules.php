@@ -2112,6 +2112,9 @@ class ExternalModules
 		else if($configRow['type'] == 'sub_settings') {
 			foreach ($configRow['sub_settings'] as $subConfigKey => $subConfigRow) {
 				$configRow['sub_settings'][$subConfigKey] = self::getAdditionalFieldChoices($subConfigRow,$pid);
+				if($configRow['super-users-only']) {
+					$configRow['sub_settings'][$subConfigKey]['super-users-only'] = $configRow['super-users-only'];
+				}
 				if(!isset($configRow['source']) && $configRow['sub_settings'][$subConfigKey]['source']) {
 					$configRow['source'] = "";
 				}
@@ -2446,7 +2449,7 @@ class ExternalModules
 			$module_name = $module['name']."_v".$module['version'];
 			$links .= "<div id='repo-updates-modid-$id'><button class='btn btn-success btn-xs' onclick=\"window.location.href='".APP_URL_EXTMOD."manager/control_center.php?download_module_id=$id&download_module_title="
 				   .  rawurlencode($module['title']." ($module_name)")."&download_module_name=$module_name';\">"
-				   .  "<span class='glyphicon glyphicon-save'></span> {$lang['global_125']}</button> {$module['title']} v{$module['version']}</div>";
+				   .  "<span class='fas fa-download'></span> {$lang['global_125']}</button> {$module['title']} v{$module['version']}</div>";
 		}
 		print  "<div class='yellow repo-updates'>
 					<div style='color:#A00000;'>
@@ -2565,7 +2568,7 @@ class ExternalModules
 		self::removeModuleFromREDCapRepoUpdatesInConfig($module_id);
 
 		// Give success message
-		return "<div class='clearfix'><div class='pull-left'><img src='".APP_PATH_IMAGES."check_big.png'></div><div class='pull-left' style='width:360px;margin:8px 0 0 20px;color:green;font-weight:600;'>The module was successfully downloaded to the REDCap server, and can now be enabled.</div></div>";
+		return "<div class='clearfix'><div class='float-left'><img src='".APP_PATH_IMAGES."check_big.png'></div><div class='float-left' style='width:360px;margin:8px 0 0 20px;color:green;font-weight:600;'>The module was successfully downloaded to the REDCap server, and can now be enabled.</div></div>";
 	}
 
 	public static function deleteModuleDirectory($moduleFolderName=null, $bypass=false){

@@ -22,12 +22,12 @@ require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php
 	
 				if(isset($enabledModules[$moduleDirectoryPrefix])){
 					$enableButtonText = 'Change Version';
-					$enableButtonIcon = 'glyphicon-refresh';
+					$enableButtonIcon = 'fas fa-sync-alt';
 					$deleteButtonDisabled = 'disabled'; // Modules cannot be deleted if they are currently enabled
 				}
 				else{
 					$enableButtonText = 'Enable';
-					$enableButtonIcon = 'glyphicon-plus-sign';
+					$enableButtonIcon = 'fas fa-plus-circle';
 					$deleteButtonDisabled = $isExampleModule ? 'disabled' : ''; // Modules cannot be deleted if they are example modules
 				}
 
@@ -60,8 +60,8 @@ require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php
 						</select>
 					</td>
 					<td class="external-modules-action-buttons">
-						<button class='btn btn-success btn-xs enable-button'><span class="glyphicon <?=$enableButtonIcon?>" aria-hidden="true"></span> <?=$enableButtonText?></button> &nbsp;
-						<button class='btn btn-default btn-xs disable-button' <?=$deleteButtonDisabled?>><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete module</button>
+						<button class='btn btn-success btn-xs enable-button'><span class="<?=$enableButtonIcon?>" aria-hidden="true"></span> <?=$enableButtonText?></button> &nbsp;
+						<button class='btn btn-defaultrc btn-xs disable-button' <?=$deleteButtonDisabled?>><span class="far fa-trash-alt" aria-hidden="true"></span> Delete module</button>
 					</td>
 				</tr>
 				<?php
