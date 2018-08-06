@@ -246,8 +246,8 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 			?>
 				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
 					<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?>
-                            <?php if ($system_enabled && SUPER_USER) print "<span class='label label-warning'>Enabled for All Projects</span>" ?>
-                            <?php if ($isDiscoverable && SUPER_USER) print "<span class='label label-info'>Discoverable</span>" ?>
+                            <?php if ($system_enabled && SUPER_USER) print "<span class='badge badge-warning'>Enabled for All Projects</span>" ?>
+                            <?php if ($isDiscoverable && SUPER_USER) print "<span class='badge badge-info'>Discoverable</span>" ?>
                         </div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div><div class='external-modules-byline'>
 <?php
 	if (SUPER_USER && !isset($_GET['pid'])) {
