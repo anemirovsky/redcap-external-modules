@@ -2127,6 +2127,9 @@ class ExternalModules
 		else if($configRow['type'] == 'sub_settings') {
 			foreach ($configRow['sub_settings'] as $subConfigKey => $subConfigRow) {
 				$configRow['sub_settings'][$subConfigKey] = self::getAdditionalFieldChoices($subConfigRow,$pid);
+				if($configRow['super-users-only']) {
+					$configRow['sub_settings'][$subConfigKey]['super-users-only'] = $configRow['super-users-only'];
+				}
 				if(!isset($configRow['source']) && $configRow['sub_settings'][$subConfigKey]['source']) {
 					$configRow['source'] = "";
 				}
@@ -2461,7 +2464,7 @@ class ExternalModules
 			$module_name = $module['name']."_v".$module['version'];
 			$links .= "<div id='repo-updates-modid-$id'><button class='btn btn-success btn-xs' onclick=\"window.location.href='".APP_URL_EXTMOD."manager/control_center.php?download_module_id=$id&download_module_title="
 				   .  rawurlencode($module['title']." ($module_name)")."&download_module_name=$module_name';\">"
-				   .  "<span class='glyphicon glyphicon-save'></span> {$lang['global_125']}</button> {$module['title']} v{$module['version']}</div>";
+				   .  "<span class='fas fa-download'></span> {$lang['global_125']}</button> {$module['title']} v{$module['version']}</div>";
 		}
 		print  "<div class='yellow repo-updates'>
 					<div style='color:#A00000;'>
@@ -2515,6 +2518,9 @@ class ExternalModules
 		$module_id = (int)$module_id;
 		// Also obtain the folder name of the module
 		$moduleFolderName = http_get(APP_URL_EXTMOD_LIB . "download.php?module_id=$module_id&name=1");
+
+		\REDCap::logEvent("Download external module \"$moduleFolderName\" from repository");
+
 		// First see if the module directory already exists
 		$moduleFolderDir = $modulesDir . $moduleFolderName . DS;
 		if (file_exists($moduleFolderDir) && is_dir($moduleFolderDir)) {
@@ -2575,13 +2581,14 @@ class ExternalModules
 		db_query($sql);
 		// Remove module_id from external_modules_updates_available config variable		
 		self::removeModuleFromREDCapRepoUpdatesInConfig($module_id);
-		// Log this event
-		if (!$bypass) \REDCap::logEvent("Download external module \"$moduleFolderName\" from repository");
+
 		// Give success message
-		return "<div class='clearfix'><div class='pull-left'><img src='".APP_PATH_IMAGES."check_big.png'></div><div class='pull-left' style='width:360px;margin:8px 0 0 20px;color:green;font-weight:600;'>The module was successfully downloaded to the REDCap server, and can now be enabled.</div></div>";
+		return "<div class='clearfix'><div class='float-left'><img src='".APP_PATH_IMAGES."check_big.png'></div><div class='float-left' style='width:360px;margin:8px 0 0 20px;color:green;font-weight:600;'>The module was successfully downloaded to the REDCap server, and can now be enabled.</div></div>";
 	}
 
 	public static function deleteModuleDirectory($moduleFolderName=null, $bypass=false){
+		\REDCap::logEvent("Delete external module \"$moduleFolderName\" from system");
+
 		if(empty($moduleFolderName)){
 			// Prevent the entire modules directory from being deleted.
 			throw new Exception("You must specify a module to delete!");
@@ -2608,8 +2615,7 @@ class ExternalModules
 		$sql = "update redcap_external_modules_downloads set time_deleted = '".NOW."' 
 				where module_name = '".db_escape($moduleFolderName)."'";
 		db_query($sql);
-		// Log this event
-		if (!$bypass) \REDCap::logEvent("Delete external module \"$moduleFolderName\" from system");
+
 		// Give success message
 		return "The module and its corresponding directory were successfully deleted from the REDCap server.";
 	}

@@ -21,8 +21,8 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title">Disable module? <span class="module-name"></span></h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 				Are you sure you wish to disable this module 
@@ -37,14 +37,14 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 </div>
 
 <div id="external-modules-disabled-modal" class="modal fade" role="dialog">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title clearfix">
-					<div class="pull-left">Available Modules</div>
-					<div class="pull-right" style="margin-right:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules"></div>
+					<div class="float-left">Available Modules</div>
+					<div class="float-right" style="margin-left:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules"></div>
 				</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 				<form>
@@ -55,11 +55,11 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 </div>
 
 <div id="external-modules-usage-modal" class="modal fade" role="dialog" data-backdrop="static">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title"></h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 			</div>
@@ -144,19 +144,19 @@ if (version_compare(PHP_VERSION, ExternalModules::MIN_PHP_VERSION, '<')) {
 
 $displayModuleDialogBtn = (SUPER_USER || ExternalModules::hasDiscoverableModules());
 $moduleDialogBtnText = SUPER_USER ? "Enable a module" : "View available modules";
-$moduleDialogBtnImg = SUPER_USER ? "glyphicon-plus-sign" : "glyphicon-info-sign";
+$moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 
 ?>
 <br>
 <?php if($displayModuleDialogBtn) { ?>
 	<button id="external-modules-enable-modules-button" class="btn btn-success btn-sm">
-		<span class="glyphicon <?=$moduleDialogBtnImg?>" aria-hidden="true"></span>
+		<span class="<?=$moduleDialogBtnImg?>" aria-hidden="true"></span>
 		<?=$moduleDialogBtnText?>
 	</button> &nbsp; 
 <?php } ?>
 <?php if (SUPER_USER && !isset($_GET['pid'])) { ?>
-	<button id="external-modules-download-modules-button" class="btn btn-primary btn-sm">
-		<span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+	<button id="external-modules-download-modules-button" class="btn btn-primary btn-primaryrc btn-sm">
+		<span class="fas fa-download" aria-hidden="true"></span>
 		View modules available in the REDCap Repo
 	</button>
 	<form id="download-new-mod-form" action="<?=APP_URL_EXTMOD_LIB?>login.php" method="post" enctype="multipart/form-data">
@@ -177,14 +177,14 @@ $moduleDialogBtnImg = SUPER_USER ? "glyphicon-plus-sign" : "glyphicon-info-sign"
 <br>
 
 <h4 class="clearfix" style="max-width: 800px;">
-	<div class="pull-left"><b>
+	<div class="float-left"><b>
 	<?php if (isset($_GET['pid'])) { ?>
 	Currently Enabled Modules
 	<?php } else { ?>
 	Modules Currently Available on this System
 	<?php } ?>
 	</b></div>
-	<div class="pull-right"><input type="text" id="enabled-modules-search" class="quicksearch" placeholder="Search enabled modules"></div>
+	<div class="float-right"><input type="text" id="enabled-modules-search" class="quicksearch" placeholder="Search enabled modules"></div>
 </h4>
 
 <script type="text/javascript">
@@ -272,7 +272,7 @@ $moduleDialogBtnImg = SUPER_USER ? "glyphicon-plus-sign" : "glyphicon-info-sign"
 
 	$documentationUrl = ExternalModules::getDocumentationUrl($prefix);
 	if(!empty($documentationUrl)){
-		?><a href='<?=$documentationUrl?>' style="display: block; margin-top: 7px" target="_blank"><i class='glyphicon glyphicon-file' style="margin-right: 5px"></i>View Documentation</a><?php
+		?><a href='<?=$documentationUrl?>' style="display: block; margin-top: 7px" target="_blank"><i class='fas fa-file' style="margin-right: 5px"></i>View Documentation</a><?php
 	}
 
     $module_instance = ExternalModules::getModuleInstance($prefix);

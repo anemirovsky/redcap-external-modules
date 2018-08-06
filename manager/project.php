@@ -27,11 +27,11 @@ ExternalModules::safeRequireOnce('manager/templates/enabled-modules.php');
 </style>
 
 <div id="external-modules-configure-modal" class="modal fade" role="dialog" data-backdrop="static">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
 				<h4 class="modal-title">Configure Module: <span class="module-name"></span></h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
 				<table class="table table-no-top-row-border">
