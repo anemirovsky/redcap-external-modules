@@ -1209,7 +1209,7 @@ class AbstractExternalModule
 		$username = ExternalModules::getUsername();
 		if (empty($ip)
 			|| empty($username) // Only log the ip if a user is logged in
-			|| $username == ExternalModules::SURVEY_RESPONDENT_USERNAME // Don't log IP for survey respondents
+			|| $this->isSurveyPage() // Don't log IPs for surveys
 		) {
 			$ip = 'null';
 		}

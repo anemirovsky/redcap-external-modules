@@ -44,8 +44,6 @@ class ExternalModules
 	const OVERRIDE_PERMISSION_LEVEL_SUFFIX = '_override-permission-level';
 	const OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS = 'design';
 
-	const SURVEY_RESPONDENT_USERNAME = '[survey_respondent]';
-
 	// We can't write values larger than this to the database, or they will be truncated.
 	const SETTING_KEY_SIZE_LIMIT = 255;
 	const SETTING_SIZE_LIMIT = 16777215;
