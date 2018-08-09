@@ -622,4 +622,19 @@ class ExternalModulesTest extends BaseTest
 		$assert(['somedir', null], 'somedir_A');
 		$assert(['somedir', null], 'somedir_v1.1.1.1');
 	}
+
+	function testGetModuleInstance()
+	{
+		$prefix = 'some_fake_prefix';
+		$variableName = 'activeModulePrefix';
+		$this->setPrivateVariable($variableName, $prefix);
+
+		$m = ExternalModules::getModuleInstance(TEST_MODULE_PREFIX);
+
+		$this->assertSame(BaseTestExternalModule::class, get_class($m));
+		$this->assertSame($prefix, $this->getPrivateVariable($variableName));
+
+		// Prevent issues in other tests.
+		$this->setPrivateVariable($variableName, null);
+	}
 }

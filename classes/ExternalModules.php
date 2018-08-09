@@ -1511,6 +1511,7 @@ class ExternalModules
 	# this is where a module has its code loaded
 	public static function getModuleInstance($prefix, $version = null)
 	{
+		$previousActiveModulePrefix = self::getActiveModulePrefix();
 		self::setActiveModulePrefix($prefix);
 
 		if($version == null){
@@ -1559,7 +1560,12 @@ class ExternalModules
 			self::$instanceCache[$prefix][$version] = $instance;
 		}
 
-		self::setActiveModulePrefix(null);
+		// Restore the active module prefix to what it was before.
+		// Calling getModuleInstance() while a module is active (inside a hook) should probably be disallowed,
+		// even if it's for the same prefix that is currently active.
+		// However, this seems to happen on occasion with the email alerts module,
+		// so we restore what was there before just to be safe.
+		self::setActiveModulePrefix($previousActiveModulePrefix);
 
 		return $instance;
 	}

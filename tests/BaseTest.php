@@ -1,5 +1,13 @@
 <?php
 namespace ExternalModules;
+
+// These were added simply to avoid warnings from REDCap code.
+$_SERVER['SERVER_NAME'] = 'unit testing';
+$_SERVER['REMOTE_ADDR'] = 'unit testing';
+if(!defined('PAGE')){
+	define('PAGE', 'unit testing');
+}
+
 require_once dirname(__FILE__) . '/../classes/ExternalModules.php';
 
 ini_set('display_errors', 1);
@@ -22,12 +30,6 @@ abstract class BaseTest extends TestCase
 	private $testModuleInstance;
 
 	public static function setUpBeforeClass(){
-		// These were added simply to avoid warnings from REDCap code.
-		$_SERVER['REMOTE_ADDR'] = 'unit testing';
-		if(!defined('PAGE')){
-			define('PAGE', 'unit testing');
-		}
-
 		ExternalModules::initialize();
 	}
 
@@ -212,7 +214,15 @@ class BaseTestExternalModule extends AbstractExternalModule {
 
 	function redcap_test_delay($delayTestFunction)
 	{
-        $delayTestFunction($this->delayModuleExecution());
+		// Although it perhaps shouldn't be, it is sometimes possible for getModuleInstance() to
+		// be called while inside a hook (it sometimes happens in the email alerts module).
+		// The getModuleInstance() function used to set the active module prefix to null on every call,
+		// which is problematic since the delayModuleExecution() method relies on the active prefix.
+		// This used to cause 'You must specify a prefix!' exceptions.
+		// We call getModuleInstance() inside this delay test hook to make sure this bug never reoccurs.
+		ExternalModules::getModuleInstance(TEST_MODULE_PREFIX);
+
+		$delayTestFunction($this->delayModuleExecution());
 	}
 
 	function redcap_test()
