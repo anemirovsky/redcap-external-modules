@@ -16,9 +16,9 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
-	const RESERVED_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'record', 'message'];
+	const RESERVED_LOG_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'record', 'message'];
 
-	private static $RESERVED_PARAMETER_NAMES_FLIPPED;
+	private static $RESERVED_LOG_PARAMETER_NAMES_FLIPPED;
 
 	public $PREFIX;
 	public $VERSION;
@@ -1185,7 +1185,7 @@ class AbstractExternalModule
 		}
 
 		foreach ($parameters as $name => $value) {
-			if (isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$name])) {
+			if (isset(self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED[$name])) {
 				throw new Exception("The '$name' parameter name is set automatically and cannot be overridden.");
 			}
 			else if($value === null){
@@ -1325,7 +1325,7 @@ class AbstractExternalModule
 		foreach ($fields as $field) {
 			if ($field == 'username') {
 				$joinUsername = true;
-			} else if (isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$field])) {
+			} else if (isset(self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED[$field])) {
 				// do nothing
 			} else {
 				$parameterFields[] = $field;
@@ -1368,7 +1368,7 @@ class AbstractExternalModule
 
 				if ($field === 'username') {
 					$newField = 'redcap_user_information.username';
-				} else if(isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$field])) {
+				} else if(isset(self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED[$field])) {
 					$newField = "redcap_external_modules_log.$field";
 				} else {
 					$newField = "$field.value";
@@ -1418,6 +1418,6 @@ class AbstractExternalModule
 
 	public static function init()
 	{
-		self::$RESERVED_PARAMETER_NAMES_FLIPPED = array_flip(self::RESERVED_PARAMETER_NAMES);
+		self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED = array_flip(self::RESERVED_LOG_PARAMETER_NAMES);
 	}
 }
