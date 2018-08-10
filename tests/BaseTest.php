@@ -225,6 +225,11 @@ class BaseTestExternalModule extends AbstractExternalModule {
 		call_user_func_array([$this, 'redcap_test'], func_get_args());
 	}
 
+	function redcap_save_record()
+	{
+		$this->recordIdFromGetRecordId = $this->getRecordId();
+	}
+
 	protected function getSettingKeyPrefix()
 	{
 		if($this->settingKeyPrefix){

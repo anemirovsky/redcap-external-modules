@@ -415,6 +415,25 @@ class ExternalModulesTest extends BaseTest
 		$this->assertHookCalled($hookName, true);
 	}
 
+	function testCallHook_setRecordId()
+	{
+		$m = $this->getInstance();
+		$m->setSystemSetting(ExternalModules::KEY_VERSION, TEST_MODULE_VERSION);
+		$m->setSystemSetting(ExternalModules::KEY_ENABLED, true);
+		$this->cacheAllEnableData();
+
+		$hookName = 'redcap_save_record';
+		$this->setConfig(['permissions' => [$hookName]]);
+
+		$projectId = 1;
+		$recordId = rand();
+		ExternalModules::callHook($hookName, [$projectId, $recordId]);
+		$this->assertSame($recordId, $m->recordIdFromGetRecordId);
+
+		// The record id should be set back to null once the hook finishes.
+		$this->assertNull($m->getRecordId());
+	}
+
 	private function assertHookCalled($hookName, $called, $pid = null)
 	{
 		$arguments = [];

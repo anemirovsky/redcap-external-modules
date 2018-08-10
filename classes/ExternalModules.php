@@ -1325,7 +1325,7 @@ class ExternalModules
 					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message, $prefix);
 				}
 				self::setActiveModulePrefix(null);
-				return;
+				continue; // No need to check for the alternate hook name.
 			}
 		}
 
