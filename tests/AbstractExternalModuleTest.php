@@ -562,6 +562,60 @@ class AbstractExternalModuleTest extends BaseTest
 		}
 	}
 
+	function testLog_recordId()
+	{
+		$m = $this->getInstance();
+
+		$m->setRecordId(null);
+		$logId = $m->log('test');
+		$this->assertLogValues($logId, [
+			'record' => null
+		]);
+
+		$generateRecordId = function(){
+			return 'some prefix to make sure string record ids work - ' . rand();
+		};
+
+		$recordId1 = $generateRecordId();
+		$m->setRecordId($recordId1);
+		$this->logAndAssertValues('test', [
+			'record' => $recordId1
+		]);
+
+		// Make sure the detected record id can be overridden by developers
+		$this->logAndAssertValues('test', [
+			'record' => null
+		]);
+		$this->logAndAssertValues('test', [
+			'record' => $generateRecordId()
+		]);
+	}
+
+	private function logAndAssertValues($message, $params)
+	{
+		$m = $this->getInstance();
+		$logId = $m->log($message, $params);
+
+		$params['message'] = $message;
+		$this->assertLogValues($logId, $params);
+	}
+
+	// Verifies that the specified values are stored in the database under the given log id.
+	private function assertLogValues($logId, $expectedValues = [])
+	{
+		$columnNamesSql = implode(',', array_keys($expectedValues));
+		$selectSql = "select $columnNamesSql where log_id = $logId";
+
+		$m = $this->getInstance();
+		$result = $m->queryLogs($selectSql);
+		$log = db_fetch_assoc($result);
+
+		foreach($expectedValues as $name=>$expectedValue){
+			$actualValue = $log[$name];
+			$this->assertSame($expectedValue, $actualValue);
+		}
+	}
+
 	function testLog_escapedCharacters()
 	{
 		$m = $this->getInstance();

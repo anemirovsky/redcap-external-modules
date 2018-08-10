@@ -16,7 +16,7 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
-	const RESERVED_LOG_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'record', 'message'];
+	const RESERVED_LOG_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'message'];
 
 	private static $RESERVED_LOG_PARAMETER_NAMES_FLIPPED;
 
@@ -1240,7 +1240,7 @@ class AbstractExternalModule
 		$logValues['ip'] = $ip;
 		$logValues['external_module_id'] = "(select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}')";
 		$logValues['project_id'] = db_real_escape_string($projectId);
-		$logValues['record'] = $recordId;
+		$logValues['record'] = "'" . db_real_escape_string($recordId) . "'";
 		$logValues['message'] = "'" . db_real_escape_string($message) . "'";
 
 		$this->query("
@@ -1254,9 +1254,12 @@ class AbstractExternalModule
 				)
 		");
 
+		$logId = db_insert_id();
 		if (!empty($parameters)) {
-			$this->insertLogParameters(db_insert_id(), $parameters);
+			$this->insertLogParameters($logId, $parameters);
 		}
+
+		return $logId;
 	}
 
 	private function insertLogParameters($logId, $parameters)
