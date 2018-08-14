@@ -48,6 +48,8 @@ class ExternalModules
 	const SETTING_KEY_SIZE_LIMIT = 255;
 	const SETTING_SIZE_LIMIT = 16777215;
 
+	const EXTERNAL_MODULES_TEMPORARY_RECORD_ID = 'external-modules-temporary-record-id';
+
 	// The minimum required PHP version for External Modules to run
 	const MIN_PHP_VERSION = '5.4.0';
 
@@ -64,6 +66,8 @@ class ExternalModules
 	public static $MODULES_BASE_PATH;
 	public static $MODULES_PATH;
 
+	private static $USERNAME;
+
 	# index is hook $name, then $prefix, then $version
 	private static $delayed;
 	private static $delayedLastRun;
@@ -74,6 +78,7 @@ class ExternalModules
 	private static $hookBeingExecuted;
 	private static $versionBeingExecuted;
 	private static $currentQuery = null;
+	private static $temporaryRecordId;
 
 	private static $initialized = false;
 	private static $activeModulePrefix;
@@ -1152,7 +1157,7 @@ class ExternalModules
 	# prefix is [institution]_[module]
 	# gets stored in database as module_id number
 	# translates prefix string into a module_id number
-	private static function getIdForPrefix($prefix)
+	public static function getIdForPrefix($prefix)
 	{
 		if(!isset(self::$idsByPrefix)){
 			$result = self::query("SELECT external_module_id, directory_prefix FROM redcap_external_modules");
@@ -1282,6 +1287,11 @@ class ExternalModules
 			$hookName = substr(self::$hookBeingExecuted, 7);
 		}
 
+		$recordId = null;
+		if (in_array($hookName, ['data_entry_form_top', 'data_entry_form', 'save_record', 'survey_page_top', 'survey_page', 'survey_complete'])) {
+			$recordId = $arguments[1];
+		}
+
 		$hookNames = array('redcap_'.$hookName, 'hook_'.$hookName);
 		
 		if(!self::hasPermission($prefix, $version, 'redcap_'.$hookName) && !self::hasPermission($prefix, $version, 'hook_'.$hookName)){
@@ -1301,6 +1311,7 @@ class ExternalModules
 		self::$versionBeingExecuted = $version;
 
 		$instance = self::getModuleInstance($prefix, $version);
+		$instance->setRecordId($recordId);
 		
 		foreach ($hookNames as $thisHook) {
 			if(method_exists($instance, $thisHook)){
@@ -1314,9 +1325,11 @@ class ExternalModules
 					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message, $prefix);
 				}
 				self::setActiveModulePrefix(null);
-				return;
+				continue; // No need to check for the alternate hook name.
 			}
 		}
+
+		$instance->setRecordId(null);
 	}
 
 	private static function getProjectIdFromHookArguments($arguments)
@@ -3014,5 +3027,74 @@ class ExternalModules
 		);
 
 		return @$types[$extension];
+	}
+
+	public static function getUsername()
+	{
+		if (!empty(self::$USERNAME)) {
+			return self::$USERNAME;
+		} else if (defined('USERID')) {
+			return USERID;
+		} else {
+			return null;
+		}
+	}
+
+	public static function setUsername($username)
+	{
+		if (!self::isTesting()) {
+			throw new Exception("This method can only be used in unit tests.");
+		}
+
+		self::$USERNAME = $username;
+	}
+
+	public static function getTemporaryRecordId()
+	{
+		return self::$temporaryRecordId;
+	}
+
+	private static function setTemporaryRecordId($temporaryRecordId)
+	{
+		self::$temporaryRecordId = $temporaryRecordId;
+	}
+
+	public function sharedSurveyAndDataEntryActions($recordId)
+	{
+		if (empty($recordId) && (self::isSurveyPage() || self::isDataEntryPage())) {
+			// We're creating a new record, but don't have an id yet.
+			// We must create a temporary record id and include it in the form so it can be used to retroactively change logs to the actual record id once it exists.
+			$temporaryRecordId = implode('-', [self::EXTERNAL_MODULES_TEMPORARY_RECORD_ID, time(), rand()]);
+			self::setTemporaryRecordId($temporaryRecordId);
+			?>
+			<script>
+				(function () {
+					$('#form').append($('<input>').attr({
+						type: 'hidden',
+						name: <?=json_encode(ExternalModules::EXTERNAL_MODULES_TEMPORARY_RECORD_ID)?>,
+						value: <?=json_encode($temporaryRecordId)?>
+					}))
+				})()
+			</script>
+			<?php
+		}
+	}
+
+	public static function isTemporaryRecordId($recordId)
+	{
+		return strpos($recordId, self::EXTERNAL_MODULES_TEMPORARY_RECORD_ID) === 0;
+	}
+
+	public function isSurveyPage()
+	{
+		$url = $_SERVER['REQUEST_URI'];
+
+		return strpos($url, '/surveys/') === 0 &&
+			strpos($url, '__passthru=DataEntry%2Fimage_view.php') === false; // Prevent hooks from firing for survey logo URLs (and breaking them).
+	}
+
+	private function isDataEntryPage()
+	{
+		return strpos($_SERVER['REQUEST_URI'], APP_PATH_WEBROOT . 'DataEntry') === 0;
 	}
 }
