@@ -87,16 +87,20 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		$m = self::getInstance();
 
-		$this->assertTrue($m->isSettingKeyValid('a'));
-		$this->assertTrue($m->isSettingKeyValid('2'));
-		$this->assertTrue($m->isSettingKeyValid('-'));
-		$this->assertTrue($m->isSettingKeyValid('_'));
+		$isSettingKeyValid = function($key) use ($m){
+			return $this->callPrivateMethodForClass($m, 'isSettingKeyValid', $key);
+		};
 
-		$this->assertFalse($m->isSettingKeyValid('A'));
-		$this->assertFalse($m->isSettingKeyValid('!'));
-		$this->assertFalse($m->isSettingKeyValid('"'));
-		$this->assertFalse($m->isSettingKeyValid('\''));
-		$this->assertFalse($m->isSettingKeyValid(' '));
+		$this->assertTrue($isSettingKeyValid('a'));
+		$this->assertTrue($isSettingKeyValid('2'));
+		$this->assertTrue($isSettingKeyValid('-'));
+		$this->assertTrue($isSettingKeyValid('_'));
+
+		$this->assertFalse($isSettingKeyValid('A'));
+		$this->assertFalse($isSettingKeyValid('!'));
+		$this->assertFalse($isSettingKeyValid('"'));
+		$this->assertFalse($isSettingKeyValid('\''));
+		$this->assertFalse($isSettingKeyValid(' '));
 	}
 
 	function assertConfigValid($config)
@@ -308,14 +312,17 @@ class AbstractExternalModuleTest extends BaseTest
 
 		$testDetect = function($param, $detectFunctionName){
 			$m = $this->getInstance();
+			$detect = function($value) use ($m, $detectFunctionName){
+				return $this->callPrivateMethodForClass($m, $detectFunctionName, $value);
+			};
 
-			$this->assertSame(null, $m->$detectFunctionName(null));
+			$this->assertSame(null, $detect(null));
 
 			$value = rand();
-			$this->assertSame($value, $m->$detectFunctionName($value));
+			$this->assertSame($value, $detect($value));
 
 			$_GET[$param] = $value;
-			$this->assertSame($value, $m->$detectFunctionName(null));
+			$this->assertSame($value, $detect(null));
 			unset($_GET[$param]);
 		};
 

@@ -202,16 +202,6 @@ class BaseTestExternalModule extends AbstractExternalModule {
 		return ExternalModules::getModuleDirectoryPath($this->PREFIX, $this->VERSION);
 	}
 
-	function __call($name, $arguments)
-	{
-		// We end up in here when we try to call a private method.
-		// use reflection to call the method anyway (allowing unit testing of private methods).
-		$method = new \ReflectionMethod(get_class(), $name);
-		$method->setAccessible(true);
-
-		return $method->invokeArgs ($this, $arguments);
-	}
-
 	function redcap_test_delay($delayTestFunction)
 	{
 		// Although it perhaps shouldn't be, it is sometimes possible for getModuleInstance() to
