@@ -1178,7 +1178,13 @@ class AbstractExternalModule
 		<?php
 	}
 
-	public function log($message, $parameters = [])
+	public function __call($name, $arguments){
+		if($name === 'log'){
+			return call_user_func_array([$this, 'log_internal'], $arguments);
+		}
+	}
+
+	private function log_internal($message, $parameters = [])
 	{
 		if (empty($message)) {
 			throw new Exception("A message is required for log entries.");
