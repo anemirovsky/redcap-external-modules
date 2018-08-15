@@ -1182,6 +1182,8 @@ class AbstractExternalModule
 		if($name === 'log'){
 			return call_user_func_array([$this, 'log_internal'], $arguments);
 		}
+
+		throw new Exception("The following method does not exist: $name()");
 	}
 
 	private function log_internal($message, $parameters = [])

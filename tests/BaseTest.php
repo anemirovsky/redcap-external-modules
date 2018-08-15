@@ -132,7 +132,7 @@ abstract class BaseTest extends TestCase
 			$exceptionThrown = true;
 		}
 
-		$this->assertTrue($exceptionThrown);
+		$this->assertTrue($exceptionThrown, "An exception was not thrown where one was expected!");
 	}
 
 	protected function callPrivateMethod($methodName)
