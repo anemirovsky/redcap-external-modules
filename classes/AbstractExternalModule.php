@@ -1286,7 +1286,7 @@ class AbstractExternalModule
 
 	public function queryLogs($sql)
 	{
-		return $this->query($this->formatLogQuery($sql));
+		return $this->query($this->getQueryLogsSql($sql));
 	}
 
 	public function removeLogs($sql)
@@ -1296,13 +1296,13 @@ class AbstractExternalModule
 		}
 
 		$select = "select 1";
-		$sql = $this->formatLogQuery("$select where $sql");
+		$sql = $this->getQueryLogsSql("$select where $sql");
 		$sql = substr_replace($sql, 'delete redcap_external_modules_log', 0, strlen($select));
 
 		return $this->query($sql);
 	}
 
-	private function formatLogQuery($sql)
+	public function getQueryLogsSql($sql)
 	{
 		$parser = new PHPSQLParser();
 		$parsed = $parser->parse($sql);
