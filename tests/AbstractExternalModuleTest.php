@@ -614,4 +614,14 @@ class AbstractExternalModuleTest extends BaseTest
 
 		$this->assertTrue(true); // Each test requires an assertion
 	}
+
+	function testExceptionOnMissingMethod()
+	{
+		// We use the __call() magic method, which prevents the default missing method error.
+		// The following asserts that we are throwing our own exception from __call().
+		$this->assertThrowsException(function(){
+			$m = $this->getInstance();
+			$m->someMethodThatDoesntExist();
+		}, 'method does not exist');
+	}
 }
