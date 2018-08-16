@@ -557,7 +557,7 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		$m = $this->getInstance();
 
-		$reservedParameterNames = AbstractExternalModule::RESERVED_PARAMETER_NAMES;
+		$reservedParameterNames = AbstractExternalModule::$RESERVED_PARAMETER_NAMES;
 		$reservedParameterNames[] = 'username';
 
 		foreach ($reservedParameterNames as $name) {

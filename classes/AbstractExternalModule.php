@@ -16,7 +16,7 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
-	const RESERVED_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'record', 'message'];
+	public static $RESERVED_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'record', 'message'];
 
 	private static $RESERVED_PARAMETER_NAMES_FLIPPED;
 
@@ -1426,6 +1426,6 @@ class AbstractExternalModule
 
 	public static function init()
 	{
-		self::$RESERVED_PARAMETER_NAMES_FLIPPED = array_flip(self::RESERVED_PARAMETER_NAMES);
+		self::$RESERVED_PARAMETER_NAMES_FLIPPED = array_flip(self::$RESERVED_PARAMETER_NAMES);
 	}
 }
