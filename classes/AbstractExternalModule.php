@@ -1368,7 +1368,10 @@ class AbstractExternalModule
 
 			if (is_array($subtree)) {
 				$this->processPseudoQuery($subtree, $fields, $addAs);
-			} else if ($item['expr_type'] == 'colref') {
+			} else if (
+				$item['expr_type'] == 'colref'
+				&& $item['base_expr'] !== '*' // This allows for "count(*)" queries
+			){
 				$field = $item['base_expr'];
 				$fields[] = $field;
 
