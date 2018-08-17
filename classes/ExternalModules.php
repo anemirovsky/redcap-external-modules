@@ -1488,16 +1488,16 @@ class ExternalModules
 		if (!isset($config['compatibility'])) return;
 		$Exceptions = array();
 		$compat = $config['compatibility'];
-		if (isset($compat['php-version-max']) && !empty($compat['php-version-max']) && !version_compare(PHP_VERSION, $compat['php-version-max'], '<=') && isCompatibleFormatCorrect($compat['php-version-max'])) {
+		if (isset($compat['php-version-max']) && !empty($compat['php-version-max']) && !version_compare(PHP_VERSION, $compat['php-version-max'], '<=') && self::isCompatibleFormatCorrect($compat['php-version-max'])) {
 			$Exceptions[] = "This module's maximum compatible PHP version is {$compat['php-version-max']}, but you are currently running PHP " . PHP_VERSION . ".";
 		}
-		elseif (isset($compat['php-version-min']) && !empty($compat['php-version-min']) && !version_compare(PHP_VERSION, $compat['php-version-min'], '>=') && isCompatibleFormatCorrect($compat['php-version-min'])) {
+		elseif (isset($compat['php-version-min']) && !empty($compat['php-version-min']) && !version_compare(PHP_VERSION, $compat['php-version-min'], '>=') && self::isCompatibleFormatCorrect($compat['php-version-min'])) {
 			$Exceptions[] = "This module's minimum required PHP version is {$compat['php-version-min']}, but you are currently running PHP " . PHP_VERSION . ".";
 		}
-		if (isset($compat['redcap-version-max']) && !empty($compat['redcap-version-max']) && !version_compare(REDCAP_VERSION, $compat['redcap-version-max'], '<=') && isCompatibleFormatCorrect($compat['redcap-version-max'])) {
+		if (isset($compat['redcap-version-max']) && !empty($compat['redcap-version-max']) && !version_compare(REDCAP_VERSION, $compat['redcap-version-max'], '<=') && self::isCompatibleFormatCorrect($compat['redcap-version-max'])) {
 			$Exceptions[] = "This module's maximum compatible REDCap version is {$compat['redcap-version-max']}, but you are currently running REDCap " . REDCAP_VERSION . ".";
 		}
-		elseif (isset($compat['redcap-version-min']) && !empty($compat['redcap-version-min']) && !version_compare(REDCAP_VERSION, $compat['redcap-version-min'], '>=') && isCompatibleFormatCorrect($compat['redcap-version-min'])) {
+		elseif (isset($compat['redcap-version-min']) && !empty($compat['redcap-version-min']) && !version_compare(REDCAP_VERSION, $compat['redcap-version-min'], '>=') && self::isCompatibleFormatCorrect($compat['redcap-version-min'])) {
 			$Exceptions[] = "This module's minimum required REDCap version is {$compat['redcap-version-min']}, but you are currently running REDCap " . REDCAP_VERSION . ".";
 		}
 
