@@ -615,14 +615,14 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertTrue(true); // Each test requires an assertion
 	}
 
-	function testQueryLogs_noWhereClause()
+	function testGetQueryLogsSql_noWhereClause()
 	{
 		$m = $this->getInstance();
 
-		// Just make sure this query is parsable, and runs without an exception.
-		$m->queryLogs("select log_id");
+		$sql = $m->getQueryLogsSql("select log_id");
 
-		$this->assertTrue(true); // Each test requires an assertion
+		// Make sure the standard where clause is still present.
+		$this->assertTrue(strpos($sql, "WHERE redcap_external_modules_log.external_module_id") !== false);
 	}
 
 	function testExceptionOnMissingMethod()
