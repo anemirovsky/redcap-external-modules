@@ -337,7 +337,7 @@ class ExternalModules
 				$sendAdminEmail = false;
 			} else {
 				$message .= ", but a specific cause could not be detected.  This could be caused by a die() or exit() call in the module, either of which should be removed to allow other module hooks to continue executing.";
-				$message .= "  This could also be caused by a killed duplicate query initiated via db_query().  All queries should be made via \$module->query() so that duplicate queries can de detected and ignored. \n";
+				$message .= "  This could also be caused by a killed duplicate query initiated via db_query().  All queries should be made via \$module->query() so that duplicate queries can be detected and ignored. \n";
 			}
 
 			if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
