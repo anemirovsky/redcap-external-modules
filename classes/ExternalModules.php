@@ -79,6 +79,7 @@ class ExternalModules
 	private static $versionBeingExecuted;
 	private static $currentQuery = null;
 	private static $temporaryRecordId;
+	private static $disablingModuleDueToException = false;
 
 	private static $initialized = false;
 	private static $activeModulePrefix;
@@ -494,20 +495,23 @@ class ExternalModules
 	}
 
 	# disables a module system-wide
-	static function disable($moduleDirectoryPrefix, $callDisableHook)
+	static function disable($moduleDirectoryPrefix, $dueToException)
 	{
 		$version = self::getModuleVersionByPrefix($moduleDirectoryPrefix);
 
-		// When a module is disabled due to certain errors (like invalid config.json syntax),
+		// When a module is disabled due to certain exceptions (like invalid config.json syntax),
 		// calling the disable hook would cause an infinite loop.
-		if ($callDisableHook) {
+		if (!$dueToException) {
 			self::callHook('redcap_module_system_disable', array($version), $moduleDirectoryPrefix);
 		}
 
-		self::removeSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
-
 		// Disable any cron jobs in the crons table
 		self::removeCronJobs($moduleDirectoryPrefix);
+		
+		// This flag allows the version system setting to be removed if the current user is not a superuser.
+		// Without it, a secondary exception would occur saying that the user doesn't have access to remove this setting.
+		self::$disablingModuleDueToException = $dueToException;
+		self::removeSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
 	}
 
 	# enables a module system-wide
@@ -708,7 +712,7 @@ class ExternalModules
 				}
 			} catch (Exception $e){
 				// Disable the module and send email to admin
-				self::disable($moduleDirectoryPrefix, false);
+				self::disable($moduleDirectoryPrefix, true);
 				$message = "The '$moduleDirectoryPrefix' module was automatically disabled because of the following error:\n\n$e";
 				error_log($message);
 				ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $moduleDirectoryPrefix", $message, $moduleDirectoryPrefix);
@@ -1987,7 +1991,7 @@ class ExternalModules
 
 			if($config == null){
 				// Disable the module to prevent repeated errors, especially those that prevent the External Modules menu items from appearing.
-				self::disable($prefix, false);
+				self::disable($prefix, true);
 
 				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 			}
@@ -2365,7 +2369,7 @@ class ExternalModules
 
 	static function hasSystemSettingsSavePermission()
 	{
-		return self::isTesting() || SUPER_USER == 1;
+		return self::isTesting() || SUPER_USER == 1 || self::$disablingModuleDueToException;
 	}
 
 	# there is no getInstance because settings returns an array of repeated elements

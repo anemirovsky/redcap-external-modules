@@ -17,7 +17,7 @@ $version = ExternalModules::getModuleVersionByPrefix($module);
 if (isset($_GET["pid"])) {
 	ExternalModules::setProjectSetting($module, $_GET['pid'], ExternalModules::KEY_ENABLED, false);
 } else {
-	ExternalModules::disable($module, true);
+	ExternalModules::disable($module, false);
 }
 
 // Log this event
