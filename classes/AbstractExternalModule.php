@@ -1320,7 +1320,17 @@ class AbstractExternalModule
 			$projectClause = " and redcap_external_modules_log.project_id = $projectId ";
 		}
 
-		$parsedStandardWhereClauses = $parser->parse("where redcap_external_modules_log.external_module_id = (select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}') $projectClause and ");
+
+		$standardWhereClauses = "where redcap_external_modules_log.external_module_id = (select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}') $projectClause";
+		if($parsed['WHERE'] === null){
+			// Set it to an empty array, since array_merge() won't work on null.
+			$parsed['WHERE'] = [];
+		}
+		else{
+			$standardWhereClauses .= ' and ';
+		}
+
+		$parsedStandardWhereClauses = $parser->parse($standardWhereClauses);
 		$parsed['WHERE'] = array_merge($parsedStandardWhereClauses['WHERE'], $parsed['WHERE']);
 
 		$creator = new PHPSQLCreator();
