@@ -93,6 +93,24 @@ switch ($pageExtension) {
         $replace = $search . ExternalModules::getModuleDirectoryUrl($prefix, $version);
         $html = str_replace($search, $replace, $html);
 
+        ?>
+		<style>
+			html{
+				background-color: whitesmoke;
+			}
+
+			body{
+				max-width: 910px;
+				margin-right: auto;
+				margin-left: auto;
+				border: 1px solid #d1d5da;
+				border-radius: 2px;
+				background-color: white;
+				padding: 30px 50px;
+			}
+		</style>
+		<?php
+
         echo $html;
         break;
     default:
