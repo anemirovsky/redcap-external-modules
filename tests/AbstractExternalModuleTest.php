@@ -658,27 +658,33 @@ class AbstractExternalModuleTest extends BaseTest
 
 			$logId = $m->logAjax($data);
 			$this->assertLogValues($logId, [
-				'record' => $data['recordId']
+				'record' => $data['parameters']['record']
 			]);
 		};
 
 		// Make sure these don't throw an exception
 		$assertLogAjax([
 			'noAuth' => false,
-			'recordId' => '123'
+			'parameters' => [
+				'record' => '123'
+			]
 		]);
 		$assertLogAjax([
 			'noAuth' => true
 		]);
 		$assertLogAjax([
 			'noAuth' => true,
-			'recordId' => ExternalModules::EXTERNAL_MODULES_TEMPORARY_RECORD_ID . '-123'
+			'parameters' => [
+				'record' => ExternalModules::EXTERNAL_MODULES_TEMPORARY_RECORD_ID . '-123'
+			]
 		]);
 
 		$this->assertThrowsException(function() use ($assertLogAjax){
 			$assertLogAjax([
 				'noAuth' => true,
-				'recordId' => '123'
+				'parameters' => [
+					'record' => '123'
+				]
 			]);
 		}, 'not allowed on NOAUTH requests');
 

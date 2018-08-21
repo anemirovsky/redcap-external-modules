@@ -1154,13 +1154,20 @@ class AbstractExternalModule
 				})
 
 				<?=$jsObject?>.log = function(message, parameters){
+					if(parameters === undefined){
+						parameters = {}
+					}
+
+					if(parameters.record === undefined){
+						parameters.record = <?=json_encode($recordId)?>
+					}
+
 					$.ajax({
 						'type': 'POST',
 						'url': "<?=$logUrl?>",
 						'data': JSON.stringify({
 							message: message
 							,parameters: parameters
-							,recordId: <?=json_encode($recordId)?>
 							,noAuth: <?=json_encode($noAuth)?>
 							<?php if($this->isSurveyPage()) { ?>
 								,surveyHash: <?=json_encode($_GET['s'])?>
@@ -1295,7 +1302,7 @@ class AbstractExternalModule
 
 	public function logAjax($data)
 	{
-		$recordId = @$data['recordId'];
+		$recordId = @$data['parameters']['record'];
 		if($data['noAuth'] && !empty($recordId) && !ExternalModules::isTemporaryRecordId($recordId)){
 			throw new Exception("Record ids (that aren't temporary) are not allowed on NOAUTH requests because they can easily be spoofed.");
 		}
