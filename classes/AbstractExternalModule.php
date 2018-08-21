@@ -1293,6 +1293,40 @@ class AbstractExternalModule
 		$this->query("insert into redcap_external_modules_log_parameters (log_id, name, value) VALUES $valuesSql");
 	}
 
+	public function logAjax($data)
+	{
+		$recordId = @$data['recordId'];
+		if($data['noAuth'] && !empty($recordId) && !ExternalModules::isTemporaryRecordId($recordId)){
+			throw new Exception("Record ids (that aren't temporary) are not allowed on NOAUTH requests because they can easily be spoofed.");
+		}
+
+		$surveyHash = @$data['surveyHash'];
+		$responseHash = @$data['responseHash'];
+		if(!empty($responseHash)){
+			// We're on a survey submission that already has a record id.
+			// We shouldn't pass the record id directly because it would be easy to spoof.
+			// Instead, we determine the record id from the response hash.
+
+			require_once APP_PATH_DOCROOT . "/Surveys/survey_functions.php";
+
+			// This method is called to set the $participant_id global;
+			global $participant_id;
+			\Survey::setSurveyVals($surveyHash);
+
+			$responseId = \decryptResponseHash($responseHash, $participant_id);
+
+			$result = $this->query("select record from redcap_surveys_response where response_id = $responseId");
+			$row = db_fetch_assoc($result);
+			$recordId = $row['record'];
+		}
+
+		if(!empty($recordId)){
+			$this->setRecordId($recordId);
+		}
+
+		return $this->log($data['message'], $data['parameters']);
+	}
+
 	public function queryLogs($sql)
 	{
 		return $this->query($this->getQueryLogsSql($sql));

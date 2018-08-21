@@ -6,8 +6,6 @@ use \Exception;
 
 class AbstractExternalModuleTest extends BaseTest
 {
-	const UNIT_TEST_LOG_MESSAGE = 'This is a unit test log message';
-
 	protected function setUp()
 	{
 		parent::setUp();
@@ -419,7 +417,7 @@ class AbstractExternalModuleTest extends BaseTest
 		// Remove left over messages in case this test previously failed
 		$m->query('delete from redcap_external_modules_log where external_module_id = ' . $testingModuleId);
 
-		$message = self::UNIT_TEST_LOG_MESSAGE;
+		$message = TEST_LOG_MESSAGE;
 		$paramName1 = 'testParam1';
 		$paramValue1 = rand();
 		$paramName2 = 'testParam2';
@@ -585,7 +583,7 @@ class AbstractExternalModuleTest extends BaseTest
 			return 'some prefix to make sure string record ids work - ' . rand();
 		};
 
-		$message = self::UNIT_TEST_LOG_MESSAGE;
+		$message = TEST_LOG_MESSAGE;
 		$recordId1 = $generateRecordId();
 		$m->setRecordId($recordId1);
 
@@ -648,6 +646,43 @@ class AbstractExternalModuleTest extends BaseTest
 		$m->removeLogs("`$paramName` is not null");
 		$result = $m->queryLogs($selectSql);
 		$this->assertNull(db_fetch_assoc($result));
+	}
+
+	function testLogAjax()
+	{
+		$assertLogAjax = function($data){
+			$data['message'] = TEST_LOG_MESSAGE;
+
+			$m = $this->getInstance();
+			$m->setRecordId(null);
+
+			$logId = $m->logAjax($data);
+			$this->assertLogValues($logId, [
+				'record' => $data['recordId']
+			]);
+		};
+
+		// Make sure these don't throw an exception
+		$assertLogAjax([
+			'noAuth' => false,
+			'recordId' => '123'
+		]);
+		$assertLogAjax([
+			'noAuth' => true
+		]);
+		$assertLogAjax([
+			'noAuth' => true,
+			'recordId' => ExternalModules::EXTERNAL_MODULES_TEMPORARY_RECORD_ID . '-123'
+		]);
+
+		$this->assertThrowsException(function() use ($assertLogAjax){
+			$assertLogAjax([
+				'noAuth' => true,
+				'recordId' => '123'
+			]);
+		}, 'not allowed on NOAUTH requests');
+
+		// TODO - At some point, it would be nice to test the survey hash parameters here.
 	}
 
 	function testQueryLogs_complexStatements()
