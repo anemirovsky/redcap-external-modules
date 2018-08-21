@@ -557,7 +557,7 @@ class AbstractExternalModuleTest extends BaseTest
 	{
 		$m = $this->getInstance();
 
-		$reservedParameterNames = AbstractExternalModule::RESERVED_LOG_PARAMETER_NAMES;
+		$reservedParameterNames = AbstractExternalModule::$RESERVED_LOG_PARAMETER_NAMES;
 		$reservedParameterNames[] = 'username';
 
 		foreach ($reservedParameterNames as $name) {
@@ -667,5 +667,25 @@ class AbstractExternalModuleTest extends BaseTest
 		$m->queryLogs("select 1 where a = 1 and (b = 2 or c = 3)");
 
 		$this->assertTrue(true); // Each test requires an assertion
+	}
+
+	function testGetQueryLogsSql_noWhereClause()
+	{
+		$m = $this->getInstance();
+
+		$sql = $m->getQueryLogsSql("select log_id");
+
+		// Make sure the standard where clause is still present.
+		$this->assertTrue(strpos($sql, "WHERE redcap_external_modules_log.external_module_id") !== false);
+	}
+
+	function testExceptionOnMissingMethod()
+	{
+		// We use the __call() magic method, which prevents the default missing method error.
+		// The following asserts that we are throwing our own exception from __call().
+		$this->assertThrowsException(function(){
+			$m = $this->getInstance();
+			$m->someMethodThatDoesntExist();
+		}, 'method does not exist');
 	}
 }

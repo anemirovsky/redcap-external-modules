@@ -16,7 +16,7 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
-	const RESERVED_LOG_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'message'];
+	public static $RESERVED_LOG_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'message'];
 
 	private static $RESERVED_LOG_PARAMETER_NAMES_FLIPPED;
 
@@ -1182,6 +1182,8 @@ class AbstractExternalModule
 		if($name === 'log'){
 			return call_user_func_array([$this, 'log_internal'], $arguments);
 		}
+
+		throw new Exception("The following method does not exist: $name()");
 	}
 
 	private function log_internal($message, $parameters = [])
@@ -1287,7 +1289,7 @@ class AbstractExternalModule
 
 	public function queryLogs($sql)
 	{
-		return $this->query($this->formatLogQuery($sql));
+		return $this->query($this->getQueryLogsSql($sql));
 	}
 
 	public function removeLogs($sql)
@@ -1297,13 +1299,13 @@ class AbstractExternalModule
 		}
 
 		$select = "select 1";
-		$sql = $this->formatLogQuery("$select where $sql");
+		$sql = $this->getQueryLogsSql("$select where $sql");
 		$sql = substr_replace($sql, 'delete redcap_external_modules_log', 0, strlen($select));
 
 		return $this->query($sql);
 	}
 
-	private function formatLogQuery($sql)
+	public function getQueryLogsSql($sql)
 	{
 		$parser = new PHPSQLParser();
 		$parsed = $parser->parse($sql);
@@ -1321,7 +1323,17 @@ class AbstractExternalModule
 			$projectClause = " and redcap_external_modules_log.project_id = $projectId ";
 		}
 
-		$parsedStandardWhereClauses = $parser->parse("where redcap_external_modules_log.external_module_id = (select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}') $projectClause and ");
+
+		$standardWhereClauses = "where redcap_external_modules_log.external_module_id = (select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}') $projectClause";
+		if($parsed['WHERE'] === null){
+			// Set it to an empty array, since array_merge() won't work on null.
+			$parsed['WHERE'] = [];
+		}
+		else{
+			$standardWhereClauses .= ' and ';
+		}
+
+		$parsedStandardWhereClauses = $parser->parse($standardWhereClauses);
 		$parsed['WHERE'] = array_merge($parsedStandardWhereClauses['WHERE'], $parsed['WHERE']);
 
 		$creator = new PHPSQLCreator();
@@ -1371,7 +1383,10 @@ class AbstractExternalModule
 
 			if (is_array($subtree)) {
 				$this->processPseudoQuery($subtree, $fields, $addAs);
-			} else if ($item['expr_type'] == 'colref') {
+			} else if (
+				$item['expr_type'] == 'colref'
+				&& $item['base_expr'] !== '*' // This allows for "count(*)" queries
+			){
 				$field = $item['base_expr'];
 				$fields[] = $field;
 
@@ -1427,6 +1442,6 @@ class AbstractExternalModule
 
 	public static function init()
 	{
-		self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED = array_flip(self::RESERVED_LOG_PARAMETER_NAMES);
+		self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED = array_flip(self::$RESERVED_LOG_PARAMETER_NAMES);
 	}
 }
