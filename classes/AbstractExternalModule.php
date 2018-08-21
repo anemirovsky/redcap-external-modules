@@ -16,9 +16,10 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
-	public static $RESERVED_LOG_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'message'];
 
+	public static $RESERVED_LOG_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'message'];
 	private static $RESERVED_LOG_PARAMETER_NAMES_FLIPPED;
+	private static $LOG_PARAMETERS_ON_MAIN_TABLE;
 
 	public $PREFIX;
 	public $VERSION;
@@ -1230,16 +1231,21 @@ class AbstractExternalModule
 			$projectId = 'null';
 		}
 
-		$recordId = @$parameters['record'];
-		if (empty($recordId)) {
-			$recordId = $this->getRecordIdOrTemporaryRecordId();
+		if(isset($parameters['record'])){
+			$recordId = $parameters['record'];
 
-			if (empty($recordId)) {
-				$recordId = 'null';
-			}
-			else{
-				$recordId = "'" . db_real_escape_string($recordId) . "'";
-			}
+			// Unset it so it doesn't get added to the parameters table.
+			unset($parameters['record']);
+		}
+		else{
+			$recordId = $this->getRecordIdOrTemporaryRecordId();
+		}
+
+		if (empty($recordId)) {
+			$recordId = 'null';
+		}
+		else{
+			$recordId = "'" . db_real_escape_string($recordId) . "'";
 		}
 
 		$logValues = [];
@@ -1248,7 +1254,7 @@ class AbstractExternalModule
 		$logValues['ip'] = $ip;
 		$logValues['external_module_id'] = "(select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}')";
 		$logValues['project_id'] = db_real_escape_string($projectId);
-		$logValues['record'] = "'" . db_real_escape_string($recordId) . "'";
+		$logValues['record'] = $recordId;
 		$logValues['message'] = "'" . db_real_escape_string($message) . "'";
 
 		$this->query("
@@ -1346,7 +1352,7 @@ class AbstractExternalModule
 		foreach ($fields as $field) {
 			if ($field == 'username') {
 				$joinUsername = true;
-			} else if (isset(self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED[$field])) {
+			} else if (isset(self::$LOG_PARAMETERS_ON_MAIN_TABLE[$field])) {
 				// do nothing
 			} else {
 				$parameterFields[] = $field;
@@ -1392,7 +1398,7 @@ class AbstractExternalModule
 
 				if ($field === 'username') {
 					$newField = 'redcap_user_information.username';
-				} else if(isset(self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED[$field])) {
+				} else if(isset(self::$LOG_PARAMETERS_ON_MAIN_TABLE[$field])) {
 					$newField = "redcap_external_modules_log.$field";
 				} else {
 					$newField = "$field.value";
@@ -1443,5 +1449,6 @@ class AbstractExternalModule
 	public static function init()
 	{
 		self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED = array_flip(self::$RESERVED_LOG_PARAMETER_NAMES);
+		self::$LOG_PARAMETERS_ON_MAIN_TABLE = array_flip(array_merge(self::$RESERVED_LOG_PARAMETER_NAMES, ['record']));
 	}
 }

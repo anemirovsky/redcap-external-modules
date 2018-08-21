@@ -6,6 +6,8 @@ use \Exception;
 
 class AbstractExternalModuleTest extends BaseTest
 {
+	const UNIT_TEST_LOG_MESSAGE = 'This is a unit test log message';
+
 	protected function setUp()
 	{
 		parent::setUp();
@@ -417,7 +419,7 @@ class AbstractExternalModuleTest extends BaseTest
 		// Remove left over messages in case this test previously failed
 		$m->query('delete from redcap_external_modules_log where external_module_id = ' . $testingModuleId);
 
-		$message = 'This is a unit test log statement';
+		$message = self::UNIT_TEST_LOG_MESSAGE;
 		$paramName1 = 'testParam1';
 		$paramValue1 = rand();
 		$paramName2 = 'testParam2';
@@ -583,27 +585,16 @@ class AbstractExternalModuleTest extends BaseTest
 			return 'some prefix to make sure string record ids work - ' . rand();
 		};
 
+		$message = self::UNIT_TEST_LOG_MESSAGE;
 		$recordId1 = $generateRecordId();
 		$m->setRecordId($recordId1);
-		$this->logAndAssertValues('test', [
-			'record' => $recordId1
-		]);
+
+		$logId = $m->log($message);
+		$this->assertLogValues($logId, ['record' => $recordId1]);
 
 		// Make sure the detected record id can be overridden by developers
-		$this->logAndAssertValues('test', [
-			'record' => null
-		]);
-		$this->logAndAssertValues('test', [
-			'record' => $generateRecordId()
-		]);
-	}
-
-	private function logAndAssertValues($message, $params)
-	{
-		$m = $this->getInstance();
+		$params = ['record' => $generateRecordId()];
 		$logId = $m->log($message, $params);
-
-		$params['message'] = $message;
 		$this->assertLogValues($logId, $params);
 	}
 
