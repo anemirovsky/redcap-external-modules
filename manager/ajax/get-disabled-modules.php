@@ -87,6 +87,14 @@ require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php
 			$enabled = ExternalModules::getProjectSetting($prefix, $_GET['pid'], ExternalModules::KEY_ENABLED);
 			$system_enabled = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_ENABLED);
 			$isDiscoverable = (ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_DISCOVERABLE) == true);
+            $isUserDesignActivatable = (ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_USER_DESIGN_ACTIVATABLE) == true);
+
+            if ($isUserDesignActivatable) {
+                // Check that they have design rights
+                $userRights = \REDCap::getUserRights(USERID);
+                $design = $userRights[USERID]['design'];
+                $isUserDesignActivatable = $design == 1;
+            }
 
 			$name = $config['name'];
 			if(empty($name)){
@@ -129,7 +137,7 @@ require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php
 					?>
 					</div></td>
 					<td class="external-modules-action-buttons">
-						<?php if (SUPER_USER) { ?><button class='enable-button'>Enable</button><?php } ?>
+						<?php if (SUPER_USER || $isUserDesignActivatable) { ?><button class='enable-button'>Enable</button><?php } ?>
 					</td>
 				</tr>
 			<?php

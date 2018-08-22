@@ -34,7 +34,7 @@ class ExternalModules
 	const KEY_VERSION = 'version';
 	const KEY_ENABLED = 'enabled';
 	const KEY_DISCOVERABLE = 'discoverable-in-project';
-	const KEY_ENABLE_MODULE_BY_ALL = 'config-all-users-enable';
+	const KEY_USER_DESIGN_ACTIVATABLE = 'config-enabled-design-rights-activation';
 	const KEY_CONFIG_USER_PERMISSION = 'config-require-user-permission';
 
 	const TEST_MODULE_PREFIX = 'UNIT-TESTING-PREFIX';
@@ -109,8 +109,8 @@ class ExternalModules
 			'type' => 'checkbox'
 		),
 		array(
-				'key' => self::KEY_ENABLE_MODULE_BY_ALL,
-				'name' => 'All adding by all users<Br />Test adding<br />',
+				'key' => self::KEY_USER_DESIGN_ACTIVATABLE,
+				'name' => '<b>Enable design-rights user to activate discoverable external module</b><br/>This does not require super-user intervention',
 				'type' => 'checkbox'
 		),
 		array(
@@ -544,7 +544,7 @@ class ExternalModules
 
 			self::initializeCronJobs($instance, $moduleDirectoryPrefix);
 		} else {
-			self::initializeSettingDefaults($instance, $project_id);
+            self::initializeSettingDefaults($instance, $project_id);
 			self::setProjectSetting($moduleDirectoryPrefix, $project_id, self::KEY_ENABLED, true);
 			self::cacheAllEnableData();
 			self::callHook('redcap_module_project_enable', array($version, $project_id), $moduleDirectoryPrefix);
@@ -862,7 +862,7 @@ class ExternalModules
 				}
 			}
 			else if (!defined("CRON") && !self::hasProjectSettingSavePermission($moduleDirectoryPrefix, $key)) {
-				throw new Exception("You don't have permission to save project settings!  $errorMessageSuffix");
+                throw new Exception("You don't have permission to save project settings!  $errorMessageSuffix");
 			}
 		}
 
@@ -2271,8 +2271,8 @@ class ExternalModules
 		if(@$settingDetails['super-users-only']){
 			return false;
 		}
-		
-		$moduleRequiresConfigUserRights = self::moduleRequiresConfigPermission($moduleDirectoryPrefix);
+
+        $moduleRequiresConfigUserRights = self::moduleRequiresConfigPermission($moduleDirectoryPrefix);
 		$userCanConfigureModule = ((!$moduleRequiresConfigUserRights && self::hasDesignRights()) 
 									|| ($moduleRequiresConfigUserRights && self::hasModuleConfigurationUserRights($moduleDirectoryPrefix)));
 
@@ -2280,6 +2280,15 @@ class ExternalModules
 			if(!self::isSystemSetting($moduleDirectoryPrefix, $key)){
 				return true;
 			}
+
+			// TODO: Is this the best way to do this?
+            $isUserDesignActivatable = (ExternalModules::getSystemSetting($moduleDirectoryPrefix, ExternalModules::KEY_USER_DESIGN_ACTIVATABLE) == true);
+            if ($isUserDesignActivatable && $key == ExternalModules::KEY_ENABLED) {
+                // Check that they have design rights
+                $userRights = \REDCap::getUserRights(USERID);
+                $design = $userRights[USERID]['design'];
+                if ($design == 1) return true;
+            }
 
 			$level = self::getSystemSetting($moduleDirectoryPrefix, $key . self::OVERRIDE_PERMISSION_LEVEL_SUFFIX);
 			return $level == self::OVERRIDE_PERMISSION_LEVEL_DESIGN_USERS;

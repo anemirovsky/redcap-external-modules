@@ -2,13 +2,23 @@
 namespace ExternalModules;
 require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php';
 
-// Only administrators can enable/disable modules
-if (!SUPER_USER) exit;
+// Only administrators with specific projects or SuperUser can enable/disable modules
+
+// Check that they have design rights
+$userRights = \REDCap::getUserRights(USERID);
+$design = $userRights[USERID]['design'];
+$isUserDesignActivatable = (ExternalModules::getSystemSetting($_POST['prefix'], ExternalModules::KEY_USER_DESIGN_ACTIVATABLE) == true);
+
+$canEnable = ( $design == 1 && $isUserDesignActivatable ) || SUPER_USER;
+
+// Only superuser or special users
+if (!$canEnable) exit;
+
 
 $return_data['message'] = "success";
 
 if (isset($_GET['pid'])) {
-	 ExternalModules::enableForProject($_POST['prefix'], $_POST['version'], $_GET['pid']);
+    ExternalModules::enableForProject($_POST['prefix'], $_POST['version'], $_GET['pid']);
 }
 else {
     $config = ExternalModules::getConfig($_POST['prefix'], $_POST['version']);
