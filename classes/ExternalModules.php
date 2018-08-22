@@ -34,6 +34,7 @@ class ExternalModules
 	const KEY_VERSION = 'version';
 	const KEY_ENABLED = 'enabled';
 	const KEY_DISCOVERABLE = 'discoverable-in-project';
+	const KEY_ENABLE_MODULE_BY_ALL = 'config-all-users-enable';
 	const KEY_CONFIG_USER_PERMISSION = 'config-require-user-permission';
 
 	const TEST_MODULE_PREFIX = 'UNIT-TESTING-PREFIX';
@@ -106,6 +107,11 @@ class ExternalModules
 			'key' => self::KEY_DISCOVERABLE,
 			'name' => '<b>Make module discoverable by users:</b><br>Display info on External Modules page in all projects',
 			'type' => 'checkbox'
+		),
+		array(
+				'key' => self::KEY_ENABLE_MODULE_BY_ALL,
+				'name' => 'All adding by all users<Br />Test adding<br />',
+				'type' => 'checkbox'
 		),
 		array(
 			'key' => self::KEY_CONFIG_USER_PERMISSION,
