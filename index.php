@@ -7,6 +7,10 @@ if($noAuth){
 	define('NOAUTH', true);
 }
 
+// The following variable is a temporary solution and should be removed after 8.7.2 is deployed at Vanderbilt.
+global $_GET_BEFORE_REDCAP_CONNECT;
+$_GET_BEFORE_REDCAP_CONNECT = $_GET;
+
 require_once dirname(__FILE__) . '/classes/ExternalModules.php';
 
 use Exception;
