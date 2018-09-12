@@ -927,7 +927,7 @@ class AbstractExternalModule
 		
 		// Update the record list cache table too
 		if (method_exists('Records', 'updateRecordDagInRecordListCache')) {
-			Records::updateRecordDagInRecordListCache(self::requireProjectId(), $record, $dagId)
+			Records::updateRecordDagInRecordListCache(self::requireProjectId(), $record, $dagId);
 		}
 	}
 
