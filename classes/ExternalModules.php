@@ -1718,50 +1718,29 @@ class ExternalModules
 		// Only attempt to detect enabled modules if the external module tables exist.
 		if (self::areTablesPresent()) {
 			$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
-
-			// Split results into version and enabled arrays: this seems wasteful, but using one
-            // query above, we can then validate which EMs/versions are valid before we build
-            // out which are enabled and how they are enabled
-            $result_versions = array();
-			$result_enabled = array();
-			while($row = self::validateSettingsRow(db_fetch_assoc($result))) {
-				$key = $row['key'];
-				if ($key == self::KEY_VERSION) {
-					$result_versions[] = $row;
-				} else if($key == self::KEY_ENABLED) {
-					$result_enabled[] = $row;
-				} else {
-					throw new Exception("Unexpected key: $key");
-				}
-			}
-
-			// For each version, verify if the module folder exists and is valid
-            foreach ($result_versions as $row) {
-				$prefix = $row['directory_prefix'];
-				$value = $row['value'];
-				if (self::shouldExcludeModule($prefix, $value)) {
-					continue;
-				} else {
-					$systemwideEnabledVersions[$prefix] = $value;
-				}
-			}
-
-			// Set enabled arrays for EMs
-			foreach ($result_enabled as $row) {
+			while($row = self::validateSettingsRow(db_fetch_assoc($result))){
 				$pid = $row['project_id'];
 				$prefix = $row['directory_prefix'];
+				$key = $row['key'];
 				$value = $row['value'];
 
-				// If EM was not valid above, then skip
-				if (!isset($systemwideEnabledVersions[$prefix])) {
+				if (self::shouldExcludeModule($prefix, $key == self::KEY_VERSION ? $value : null)) {
 					continue;
 				}
 
-				// Set enabled global or project
-				if (isset($pid)) {
-					$projectEnabledOverrides[$pid][$prefix] = $value;
-				} else if ($value) {
-					$projectEnabledDefaults[$prefix] = true;
+				if($key == self::KEY_VERSION){
+					$systemwideEnabledVersions[$prefix] = $value;
+				}
+				else if($key == self::KEY_ENABLED){
+					if(isset($pid)){
+						$projectEnabledOverrides[$pid][$prefix] = $value;
+					}
+					else if($value) {
+						$projectEnabledDefaults[$prefix] = true;
+					}
+				}
+				else{
+					throw new Exception("Unexpected key: $key");
 				}
 			}
 		}
