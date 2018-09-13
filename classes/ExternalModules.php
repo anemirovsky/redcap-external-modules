@@ -79,6 +79,7 @@ class ExternalModules
 	private static $versionBeingExecuted;
 	private static $currentQuery = null;
 	private static $temporaryRecordId;
+	private static $disablingModuleDueToException = false;
 
 	private static $initialized = false;
 	private static $activeModulePrefix;
@@ -494,20 +495,23 @@ class ExternalModules
 	}
 
 	# disables a module system-wide
-	static function disable($moduleDirectoryPrefix, $callDisableHook)
+	static function disable($moduleDirectoryPrefix, $dueToException)
 	{
 		$version = self::getModuleVersionByPrefix($moduleDirectoryPrefix);
 
-		// When a module is disabled due to certain errors (like invalid config.json syntax),
+		// When a module is disabled due to certain exceptions (like invalid config.json syntax),
 		// calling the disable hook would cause an infinite loop.
-		if ($callDisableHook) {
+		if (!$dueToException) {
 			self::callHook('redcap_module_system_disable', array($version), $moduleDirectoryPrefix);
 		}
 
-		self::removeSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
-
 		// Disable any cron jobs in the crons table
 		self::removeCronJobs($moduleDirectoryPrefix);
+		
+		// This flag allows the version system setting to be removed if the current user is not a superuser.
+		// Without it, a secondary exception would occur saying that the user doesn't have access to remove this setting.
+		self::$disablingModuleDueToException = $dueToException;
+		self::removeSystemSetting($moduleDirectoryPrefix, self::KEY_VERSION);
 	}
 
 	# enables a module system-wide
@@ -708,7 +712,7 @@ class ExternalModules
 				}
 			} catch (Exception $e){
 				// Disable the module and send email to admin
-				self::disable($moduleDirectoryPrefix, false);
+				self::disable($moduleDirectoryPrefix, true);
 				$message = "The '$moduleDirectoryPrefix' module was automatically disabled because of the following error:\n\n$e";
 				error_log($message);
 				ExternalModules::sendAdminEmail("REDCap External Module Automatically Disabled - $moduleDirectoryPrefix", $message, $moduleDirectoryPrefix);
@@ -1714,29 +1718,50 @@ class ExternalModules
 		// Only attempt to detect enabled modules if the external module tables exist.
 		if (self::areTablesPresent()) {
 			$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
-			while($row = self::validateSettingsRow(db_fetch_assoc($result))){
+
+			// Split results into version and enabled arrays: this seems wasteful, but using one
+            // query above, we can then validate which EMs/versions are valid before we build
+            // out which are enabled and how they are enabled
+            $result_versions = array();
+			$result_enabled = array();
+			while($row = self::validateSettingsRow(db_fetch_assoc($result))) {
+				$key = $row['key'];
+				if ($key == self::KEY_VERSION) {
+					$result_versions[] = $row;
+				} else if($key == self::KEY_ENABLED) {
+					$result_enabled[] = $row;
+				} else {
+					throw new Exception("Unexpected key: $key");
+				}
+			}
+
+			// For each version, verify if the module folder exists and is valid
+            foreach ($result_versions as $row) {
+				$prefix = $row['directory_prefix'];
+				$value = $row['value'];
+				if (self::shouldExcludeModule($prefix, $value)) {
+					continue;
+				} else {
+					$systemwideEnabledVersions[$prefix] = $value;
+				}
+			}
+
+			// Set enabled arrays for EMs
+			foreach ($result_enabled as $row) {
 				$pid = $row['project_id'];
 				$prefix = $row['directory_prefix'];
-				$key = $row['key'];
 				$value = $row['value'];
 
-				if (self::shouldExcludeModule($prefix, $key == self::KEY_VERSION ? $value : null)) {
+				// If EM was not valid above, then skip
+				if (!isset($systemwideEnabledVersions[$prefix])) {
 					continue;
 				}
 
-				if($key == self::KEY_VERSION){
-					$systemwideEnabledVersions[$prefix] = $value;
-				}
-				else if($key == self::KEY_ENABLED){
-					if(isset($pid)){
-						$projectEnabledOverrides[$pid][$prefix] = $value;
-					}
-					else if($value) {
-						$projectEnabledDefaults[$prefix] = true;
-					}
-				}
-				else{
-					throw new Exception("Unexpected key: $key");
+				// Set enabled global or project
+				if (isset($pid)) {
+					$projectEnabledOverrides[$pid][$prefix] = $value;
+				} else if ($value) {
+					$projectEnabledDefaults[$prefix] = true;
 				}
 			}
 		}
@@ -1987,7 +2012,7 @@ class ExternalModules
 
 			if($config == null){
 				// Disable the module to prevent repeated errors, especially those that prevent the External Modules menu items from appearing.
-				self::disable($prefix, false);
+				self::disable($prefix, true);
 
 				throw new Exception("An error occurred while parsing a configuration file!  The following file is likely not valid JSON: $configFilePath");
 			}
@@ -2365,7 +2390,7 @@ class ExternalModules
 
 	static function hasSystemSettingsSavePermission()
 	{
-		return self::isTesting() || SUPER_USER == 1;
+		return self::isTesting() || SUPER_USER == 1 || self::$disablingModuleDueToException;
 	}
 
 	# there is no getInstance because settings returns an array of repeated elements
