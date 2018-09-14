@@ -456,8 +456,7 @@ class AbstractExternalModuleTest extends BaseTest
 		$m->setRecordId(null);
 		$m->log($message);
 
-		$result = $m->query('select username from redcap_user_information limit 1');
-		$username = db_fetch_assoc($result)['username'];
+		$username = $this->getRandomUsername();
 
 		ExternalModules::setUsername($username);
 		$_SERVER['HTTP_CLIENT_IP'] = '1.2.3.4';
@@ -558,7 +557,6 @@ class AbstractExternalModuleTest extends BaseTest
 		$m = $this->getInstance();
 
 		$reservedParameterNames = AbstractExternalModule::$RESERVED_LOG_PARAMETER_NAMES;
-		$reservedParameterNames[] = 'username';
 
 		foreach ($reservedParameterNames as $name) {
 			$this->assertThrowsException(function () use ($m, $name) {
@@ -608,7 +606,7 @@ class AbstractExternalModuleTest extends BaseTest
 
 		foreach($expectedValues as $name=>$expectedValue){
 			$actualValue = $log[$name];
-			$this->assertSame($expectedValue, $actualValue);
+			$this->assertSame($expectedValue, $actualValue, "For the '$name' log parameter:");
 		}
 	}
 
@@ -648,47 +646,138 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertNull(db_fetch_assoc($result));
 	}
 
-	function testLogAjax()
+	function testLog_unsupportedTypes()
 	{
-		$assertLogAjax = function($data){
-			$data['message'] = TEST_LOG_MESSAGE;
-
+		$this->assertThrowsException(function(){
 			$m = $this->getInstance();
-			$m->setRecordId(null);
-
-			$logId = $m->logAjax($data);
-			$this->assertLogValues($logId, [
-				'record' => $data['parameters']['record']
+			$m->log('foo', [
+				'some-unsupported-type' => new \stdClass()
 			]);
+		}, "The type 'object' for the 'some-unsupported-type' parameter is not supported");
+	}
+
+	function getRandomUsername()
+	{
+		$result = db_query('select username from redcap_user_information order by rand() limit 1');
+		$username =  db_fetch_assoc($result)['username'];
+
+		return $username;
+	}
+
+	function testLog_overridableParameters()
+	{
+		$m = $this->getInstance();
+
+		$testValues = [
+			'timestamp' => date("Y-m-d H:i:s"),
+			'username' => $this->getRandomUsername(),
+			'project_id' => '1'
+		];
+
+		foreach(AbstractExternalModule::$OVERRIDABLE_LOG_PARAMETERS_ON_MAIN_TABLE as $name){
+
+			$value = $testValues[$name];
+			if(empty($value)){
+				$value = 'foo';
+			}
+
+			$params = [
+				$name => $value
+			];
+
+			$logId = $m->log('foo', $params);
+			$this->assertLogValues($logId, $params);
+		}
+	}
+
+	function testGetIPSQL()
+	{
+		$ip = '1.2.3.4';
+		$_SERVER['HTTP_CLIENT_IP'] = $ip;
+		$username = 'jdoe';
+		ExternalModules::setUsername($username);
+
+		$ipParameter = '2.3.4.5';
+		$this->assertSame("'$ipParameter'", $this->callPrivateMethod('getIPSQL', $ipParameter));
+
+		$assertIp = function($ip){
+			if(empty($ip)){
+				$ip = 'null';
+			}
+			else{
+				$ip = "'$ip'";
+			}
+
+			$this->assertSame($ip, $this->callPrivateMethod('getIPSQL', null));
 		};
 
-		// Make sure these don't throw an exception
-		$assertLogAjax([
-			'noAuth' => false,
-			'parameters' => [
-				'record' => '123'
-			]
+		$assertIp($ip);
+
+		$_SERVER['REQUEST_URI'] = '/surveys/';
+		$assertIp(null);
+
+		$_SERVER['REQUEST_URI'] = '';
+		$assertIp($ip);
+
+		ExternalModules::setUsername(null);
+		$assertIp(null);
+
+		ExternalModules::setUsername($username);
+		$assertIp($ip);
+
+		unset($_SERVER['HTTP_CLIENT_IP']);
+		$assertIp(null);
+	}
+
+	function assertLogAjax($data)
+	{
+		$data['message'] = TEST_LOG_MESSAGE;
+
+		$m = $this->getInstance();
+		$m->setRecordId(null);
+
+		$logId = $m->logAjax($data);
+		$this->assertLogValues($logId, [
+			'record' => $data['parameters']['record']
 		]);
-		$assertLogAjax([
+
+		// TODO - At some point, it would be nice to test the survey hash parameters here.
+	}
+
+	function testLogAjax_overridableParameters()
+	{
+		foreach(AbstractExternalModule::$OVERRIDABLE_LOG_PARAMETERS_ON_MAIN_TABLE as $name){
+			$this->assertThrowsException(function() use ($name){
+				$this->assertLogAjax([
+					'parameters' => [
+						$name => 'foo'
+					]
+				]);
+			}, "'$name' parameter cannot be overridden via AJAX log requests");
+		}
+	}
+
+	function testLogAjax_record()
+	{
+		// Make sure these don't throw an exception
+		$this->assertLogAjax([
 			'noAuth' => true
 		]);
-		$assertLogAjax([
+		$this->assertLogAjax([
 			'noAuth' => true,
 			'parameters' => [
 				'record' => ExternalModules::EXTERNAL_MODULES_TEMPORARY_RECORD_ID . '-123'
 			]
 		]);
 
-		$this->assertThrowsException(function() use ($assertLogAjax){
-			$assertLogAjax([
+		$this->assertThrowsException(function(){
+			$this->assertLogAjax([
 				'noAuth' => true,
 				'parameters' => [
 					'record' => '123'
 				]
 			]);
-		}, 'not allowed on NOAUTH requests');
-
-		// TODO - At some point, it would be nice to test the survey hash parameters here.
+		}, "'record' parameter cannot be overridden via AJAX log requests");
 	}
 
 	function testQueryLogs_complexStatements()
