@@ -931,7 +931,7 @@ class AbstractExternalModule
 		
 		// Update the record list cache table too
 		if (method_exists('Records', 'updateRecordDagInRecordListCache')) {
-			Records::updateRecordDagInRecordListCache(self::requireProjectId(), $record, $dagId);
+			\Records::updateRecordDagInRecordListCache(self::requireProjectId(), $record, $dagId);
 		}
 	}
 
@@ -1003,7 +1003,7 @@ class AbstractExternalModule
 		// Add record to the record list cache table
 		if (method_exists('Records', 'addRecordToRecordListCache')) {
 			$arm = db_result(db_query("select arm_num from redcap_events_arms a, redcap_events_metadata e where a.arm_id = e.arm_id and e.event_id = $eventId"), 0);
-			Records::addRecordToRecordListCache($pid, $recordId, $arm);
+			\Records::addRecordToRecordListCache($pid, $recordId, $arm);
 		}
 
 		return $recordId;
