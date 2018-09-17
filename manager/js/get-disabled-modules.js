@@ -54,30 +54,35 @@ $(function(){
 				url += '?pid=' + pid
 			}
 
+			var showErrorAlert = function(message){
+				var message = 'An error occurred while enabling the module: ' + message;
+				console.log('AJAX Request Error:', message);
+				alert(message);
+				disabledModal.modal('hide');
+				enableModal.modal('hide');
+			}
+
 			$.post(url, {prefix: prefix, version: version}, function(data){
-				try {
-					var jsonAjax = jQuery.parseJSON(data);
-					if (typeof jsonAjax == 'object') {
-						if (jsonAjax['error_message']) {
-							enableErrorDiv.show();
-							enableErrorDiv.html(jsonAjax['error_message']);
-							$('.close-button').attr('disabled', false);
-							enableButton.hide();
-						}else if (jsonAjax['message'] == 'success') {
-							reloadThisPage();
-							disabledModal.modal('hide');
-							enableModal.modal('hide');
-						}
-					}else{
-						var message = 'An error occurred while enabling the module: ' + data;
-						console.log('AJAX Request Error:', message);
-						alert(message);
-						enableModal.modal('hide');
+				var jsonAjax = jQuery.parseJSON(data);
+				if (typeof jsonAjax != 'object') {
+					showErrorAlert(data)
+					return
+				}
+
+				var errorMessage = jsonAjax['error_message']
+				if (errorMessage) {
+					if(pid){
+						showErrorAlert(errorMessage)
 					}
-				} catch(err) {
-					var message = 'An error occurred while enabling the module: ' + data;
-					console.log('AJAX Request Error:', message);
-					alert(message);
+					else{
+						enableErrorDiv.show();
+						enableErrorDiv.html(errorMessage);
+						$('.close-button').attr('disabled', false);
+						enableButton.hide();
+					}
+				}else if (jsonAjax['message'] == 'success') {
+					reloadThisPage();
+					disabledModal.modal('hide');
 					enableModal.modal('hide');
 				}
 			});
