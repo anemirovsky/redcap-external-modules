@@ -809,4 +809,47 @@ class AbstractExternalModuleTest extends BaseTest
 			$m->someMethodThatDoesntExist();
 		}, 'method does not exist');
 	}
+
+	function testGetSubSettings()
+	{
+		$_GET['pid'] = 1;
+		$m = $this->getInstance();
+
+		$settingValues = [
+			// Make sure the first setting is no longer being used to detect any lengths by simulated a new/empty setting.
+			'key1' => [],
+
+			// These settings each intentionally have difference lengths to make sure they're still returned appropriately.
+			'key2' => ['a', 'b', 'c'],
+			'key3' => [1,2,3,4,5],
+			'key4' => [true, false]
+		];
+
+		$subSettingsConfig = [];
+		foreach($settingValues as $key=>$values){
+			$m->setProjectSetting($key, $values);
+
+			$subSettingsConfig[] = [
+				'key' => $key
+			];
+		}
+
+		$subSettingsKey = 'sub-settings-key';
+		$this->setConfig([
+			'project-settings' => [
+				[
+					'key' => $subSettingsKey,
+					'type' => 'sub_settings',
+					'sub_settings' => $subSettingsConfig
+				]
+			]
+		]);
+
+		$subSettingResults = $m->getSubSettings($subSettingsKey);
+		foreach($settingValues as $key=>$values){
+			for($i=0; $i<count($values); $i++){
+				$this->assertSame($settingValues[$key][$i], $subSettingResults[$i][$key]);
+			}
+		}
+	}
 }
