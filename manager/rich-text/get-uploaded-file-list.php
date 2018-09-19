@@ -77,9 +77,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 		$edocId = $file['edocId'];
 		$name = $file['name'];
 		$extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+		$url = ExternalModules::getModuleAPIUrl() . "page=/manager/rich-text/get-file.php&file=$edocId.$extension&prefix=$prefix&pid=$pid"
 		?>
 		<tr>
-			<td><a href="#" data-edoc-file="<?="$edocId.$extension"?>"><?=$name?></a></td>
+			<td><a href="<?=$url?>"><?=$name?></a></td>
 			<td>
 				<form method='POST' enctype='multipart/form-data'>
 					<input type="hidden" name="edoc-to-delete" value="<?=$edocId?>">
@@ -115,9 +116,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
 		table.find('a').click(function(e){
 			e.preventDefault()
-			var file = $(this).data('edoc-file')
-			var url = parent.ExternalModules.BASE_URL + 'manager/rich-text/get-file.php?file=' + file + '&prefix=<?=$prefix?>&pid=<?=$pid?>'
-			parent.ExternalModules.currentFilePickerCallback(url)
+			parent.ExternalModules.currentFilePickerCallback(this.href)
 		})
 
 		table.find('button.delete').click(function(){
