@@ -790,14 +790,48 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertTrue(true); // Each test requires an assertion
 	}
 
-	function testGetQueryLogsSql_noWhereClause()
+	function testGetQueryLogsSql_moduleId()
 	{
 		$m = $this->getInstance();
 
-		$sql = $m->getQueryLogsSql("select log_id");
+		$columnName = 'external_module_id';
 
-		// Make sure the standard where clause is still present.
-		$this->assertTrue(strpos($sql, "WHERE redcap_external_modules_log.external_module_id") !== false);
+		// Make sure that when no where clause is present, a where clause for the current module is added
+		$sql = $m->getQueryLogsSql("select log_id");
+		$this->assertEquals(1, substr_count($sql, " WHERE redcap_external_modules_log.$columnName = (SELECT $columnName FROM redcap_external_modules WHERE directory_prefix = '" . TEST_MODULE_PREFIX . "')"));
+
+		$moduleId = rand();
+		$overrideClause = "$columnName = $moduleId";
+		$sql = $m->getQueryLogsSql("select 1 where $overrideClause");
+
+		// Make sure there is only one clause related to the module id.
+		$this->assertEquals(1, substr_count($sql, $columnName));
+
+		// Make sure our override clause has replaced the the clause for the current module.
+		$this->assertEquals(1, substr_count($sql, $overrideClause));
+	}
+
+	function testGetQueryLogsSql_overrideProjectId()
+	{
+		$m = $this->getInstance();
+
+		$columnName = 'project_id';
+
+		// Make sure that when no where clause is present, a where clause for the current project is added
+		$projectId = '1';
+		$_GET['pid'] = $projectId;
+		$sql = $m->getQueryLogsSql("select log_id");
+		$this->assertEquals(1, substr_count($sql, "$columnName = $projectId"));
+
+		$projectId = '2';
+		$overrideClause = "$columnName = $projectId";
+		$sql = $m->getQueryLogsSql("select 1 where $overrideClause");
+
+		// Make sure there is only one clause related to the project id.
+		$this->assertEquals(1, substr_count($sql, $columnName));
+
+		// Make sure our override clause has replaced the the clause for the current project.
+		$this->assertEquals(1, substr_count($sql, $overrideClause));
 	}
 
 	function testExceptionOnMissingMethod()
