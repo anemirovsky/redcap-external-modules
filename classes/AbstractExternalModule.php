@@ -16,6 +16,7 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
+	const EXTERNAL_MODULE_ID_STANDARD_WHERE_CLAUSE_PREFIX = "redcap_external_modules_log.external_module_id = (SELECT external_module_id FROM redcap_external_modules WHERE directory_prefix";
 
 	// check references to this to make sure moving vars was safe
 	// rename the following var?
@@ -1404,6 +1405,12 @@ class AbstractExternalModule
 		$sql = $this->getQueryLogsSql("$select where $sql");
 		$sql = substr_replace($sql, 'delete redcap_external_modules_log', 0, strlen($select));
 
+		if(strpos($sql, AbstractExternalModule::EXTERNAL_MODULE_ID_STANDARD_WHERE_CLAUSE_PREFIX) === false) {
+			// An external_module_id must have been specified in the where clause, preventing the standard clause from being included.
+			// This check also make sure that a bug in the framework doesn't remove logs for all modules (especially important when developing changes to log methods).
+			throw new Exception("Specifying an 'external_module_id' in the where clause for removeLogs() is not allowed to prevent modules from accidentally removing logs for other modules.");
+		}
+
 		return $this->query($sql);
 	}
 
@@ -1425,7 +1432,7 @@ class AbstractExternalModule
 		$standardWhereClauses = [];
 
 		if(!in_array('external_module_id', $whereFields)){
-			$standardWhereClauses[] = "redcap_external_modules_log.external_module_id = (select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}')";
+			$standardWhereClauses[] = AbstractExternalModule::EXTERNAL_MODULE_ID_STANDARD_WHERE_CLAUSE_PREFIX . " = '{$this->PREFIX}')";
 		}
 
 		if(!in_array('project_id', $whereFields)){

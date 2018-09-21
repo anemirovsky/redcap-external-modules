@@ -798,7 +798,7 @@ class AbstractExternalModuleTest extends BaseTest
 
 		// Make sure that when no where clause is present, a where clause for the current module is added
 		$sql = $m->getQueryLogsSql("select log_id");
-		$this->assertEquals(1, substr_count($sql, " WHERE redcap_external_modules_log.$columnName = (SELECT $columnName FROM redcap_external_modules WHERE directory_prefix = '" . TEST_MODULE_PREFIX . "')"));
+		$this->assertEquals(1, substr_count($sql, AbstractExternalModule::EXTERNAL_MODULE_ID_STANDARD_WHERE_CLAUSE_PREFIX . " = '" . TEST_MODULE_PREFIX . "')"));
 
 		$moduleId = rand();
 		$overrideClause = "$columnName = $moduleId";
@@ -832,6 +832,23 @@ class AbstractExternalModuleTest extends BaseTest
 
 		// Make sure our override clause has replaced the the clause for the current project.
 		$this->assertEquals(1, substr_count($sql, $overrideClause));
+	}
+
+	function testRemoveLogs()
+	{
+		$m = $this->getInstance();
+		$logId1 = $m->log('one');
+		$logId2 = $m->log('two');
+
+		$m->removeLogs("log_id = $logId1");
+
+		$this->assertThrowsException(function() use ($m){
+			$m->removeLogs('');
+		}, 'must specify a where clause');
+
+		$this->assertThrowsException(function() use ($m){
+			$m->removeLogs('external_module_id = 1');
+		}, 'not allowed to prevent modules from accidentally removing logs for other modules');
 	}
 
 	function testExceptionOnMissingMethod()
