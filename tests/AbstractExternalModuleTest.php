@@ -790,6 +790,16 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertTrue(true); // Each test requires an assertion
 	}
 
+	function testQueryLogs_orderBy(){
+
+		$m = $this->getInstance();
+
+		// Just make sure this query is parsable, and runs without an exception.
+		$m->queryLogs("select 1 where 1 = 2 order by log_id");
+
+		$this->assertTrue(true); // Each test requires an assertion
+	}
+
 	function testGetQueryLogsSql_moduleId()
 	{
 		$m = $this->getInstance();

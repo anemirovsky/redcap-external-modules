@@ -1425,9 +1425,11 @@ class AbstractExternalModule
 
 		$selectFields = [];
 		$whereFields = [];
+		$orderByFields = [];
 		$this->processPseudoQuery($parsed['SELECT'], $selectFields, true);
 		$this->processPseudoQuery($parsed['WHERE'], $whereFields, false);
-		$fields = array_merge($selectFields, $whereFields);
+		$this->processPseudoQuery($parsed['ORDER'], $orderByFields, false);
+		$fields = array_merge($selectFields, $whereFields, $orderByFields);
 
 		$standardWhereClauses = [];
 
