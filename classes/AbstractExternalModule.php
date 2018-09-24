@@ -16,9 +16,13 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
-	public static $RESERVED_PARAMETER_NAMES = ['log_id', 'timestamp', 'ui_id', 'username', 'ip', 'external_module_id', 'project_id', 'record', 'message'];
 
-	private static $RESERVED_PARAMETER_NAMES_FLIPPED;
+	// check references to this to make sure moving vars was safe
+	// rename the following var?
+	public static $RESERVED_LOG_PARAMETER_NAMES = ['log_id', 'external_module_id', 'ui_id'];
+	private static $RESERVED_LOG_PARAMETER_NAMES_FLIPPED;
+	public static $OVERRIDABLE_LOG_PARAMETERS_ON_MAIN_TABLE = ['timestamp', 'username', 'ip', 'project_id', 'record', 'message'];
+	private static $LOG_PARAMETERS_ON_MAIN_TABLE;
 
 	public $PREFIX;
 	public $VERSION;
@@ -1164,13 +1168,26 @@ class AbstractExternalModule
 				})
 
 				<?=$jsObject?>.log = function(message, parameters){
+					if(parameters === undefined){
+						parameters = {}
+					}
+
+					<?php
+					if(!empty($recordId)){
+						?>
+						if(parameters.record === undefined){
+							parameters.record = <?=json_encode($recordId)?>
+						}
+						<?php
+					}
+					?>
+
 					$.ajax({
 						'type': 'POST',
 						'url': "<?=$logUrl?>",
 						'data': JSON.stringify({
 							message: message
 							,parameters: parameters
-							,recordId: <?=json_encode($recordId)?>
 							,noAuth: <?=json_encode($noAuth)?>
 							<?php if($this->isSurveyPage()) { ?>
 								,surveyHash: <?=json_encode($_GET['s'])?>
@@ -1179,7 +1196,7 @@ class AbstractExternalModule
 						}),
 						'success': function(data){
 							if(data !== 'success'){
-								console.log("An error occurred while calling the log API!")
+								console.error("An error occurred while calling the log API:", data)
 							}
 						}
 					})
@@ -1204,7 +1221,7 @@ class AbstractExternalModule
 		}
 
 		foreach ($parameters as $name => $value) {
-			if (isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$name])) {
+			if (isset(self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED[$name])) {
 				throw new Exception("The '$name' parameter name is set automatically and cannot be overridden.");
 			}
 			else if($value === null){
@@ -1222,41 +1239,49 @@ class AbstractExternalModule
 			}
 		}
 
-		// The IP could contain multiple comma separated addresses (if proxies are used).
-		// To accommodated at least three IPv4 addresses, the DB field is 100 chars long like the redcap_log_event table.
-		$ip = \System::clientIpAddress();
-		$username = ExternalModules::getUsername();
-		if (empty($ip)
-			|| empty($username) // Only log the ip if a user is logged in
-			|| $this->isSurveyPage() // Don't log IPs for surveys
-		) {
-			$ip = 'null';
+		$timestamp = @$parameters['timestamp'];
+		if(empty($timestamp)){
+			$timestamp = 'now()';
 		}
 		else{
-			$ip = "'" . db_real_escape_string($ip) . "'";
+			$timestamp = "'" . db_real_escape_string($timestamp) . "'";
 		}
 
-		$projectId = $this->getProjectId();
+		$projectId = @$parameters['project_id'];
 		if (empty($projectId)) {
-			$projectId = 'null';
+			$projectId = $this->getProjectId();
+
+			if (empty($projectId)) {
+				$projectId = 'null';
+			}
 		}
 
-		$recordId = @$parameters['record'];
-		if (empty($recordId)) {
-			$recordId = $this->getRecordIdOrTemporaryRecordId();
+		$username = @$parameters['username'];
+		if(empty($username)){
+			$username = ExternalModules::getUsername();;
+		}
 
-			if (empty($recordId)) {
-				$recordId = 'null';
-			}
-			else{
-				$recordId = "'" . db_real_escape_string($recordId) . "'";
-			}
+		if(isset($parameters['record'])){
+			$recordId = $parameters['record'];
+
+			// Unset it so it doesn't get added to the parameters table.
+			unset($parameters['record']);
+		}
+		else{
+			$recordId = $this->getRecordIdOrTemporaryRecordId();
+		}
+
+		if (empty($recordId)) {
+			$recordId = 'null';
+		}
+		else{
+			$recordId = "'" . db_real_escape_string($recordId) . "'";
 		}
 
 		$logValues = [];
-		$logValues['timestamp'] = 'now()';
-		$logValues['ui_id'] = "(select ui_id from redcap_user_information where username = '$username')";
-		$logValues['ip'] = $ip;
+		$logValues['timestamp'] = $timestamp;
+		$logValues['ui_id'] = "(select ui_id from redcap_user_information where username = '" . db_real_escape_string($username) . "')";
+		$logValues['ip'] = $this->getIPSQL(@$parameters['ip']);
 		$logValues['external_module_id'] = "(select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}')";
 		$logValues['project_id'] = db_real_escape_string($projectId);
 		$logValues['record'] = $recordId;
@@ -1273,9 +1298,34 @@ class AbstractExternalModule
 				)
 		");
 
+		$logId = db_insert_id();
 		if (!empty($parameters)) {
-			$this->insertLogParameters(db_insert_id(), $parameters);
+			$this->insertLogParameters($logId, $parameters);
 		}
+
+		return $logId;
+	}
+
+	private function getIPSQL($ip)
+	{
+		if(
+			empty($ip)
+			&& !empty(ExternalModules::getUsername()) // Only log the ip if a user is currently logged in
+			&& !$this->isSurveyPage() // Don't log IPs for surveys
+		){
+			// The IP could contain multiple comma separated addresses (if proxies are used).
+			// To accommodated at least three IPv4 addresses, the DB field is 100 chars long like the redcap_log_event table.
+			$ip = \System::clientIpAddress();
+		}
+
+		if (empty($ip)) {
+			$ip = 'null';
+		}
+		else{
+			$ip = "'" . db_real_escape_string($ip) . "'";
+		}
+
+		return $ip;
 	}
 
 	private function insertLogParameters($logId, $parameters)
@@ -1293,6 +1343,51 @@ class AbstractExternalModule
 		}
 
 		$this->query("insert into redcap_external_modules_log_parameters (log_id, name, value) VALUES $valuesSql");
+	}
+
+	public function logAjax($data)
+	{
+		$parameters = @$data['parameters'];
+		if(!$parameters){
+			$parameters = [];
+		}
+
+		foreach($parameters as $name=>$value){
+			if($name === 'record' && ExternalModules::isTemporaryRecordId($value)){
+				// Allow the temporary record id to get passed through as a parameter.
+				continue;
+			}
+
+			if(in_array($name, self::$OVERRIDABLE_LOG_PARAMETERS_ON_MAIN_TABLE)){
+				throw new Exception("For security reasons, the '$name' parameter cannot be overridden via AJAX log requests.  It can be overridden only be overridden by PHP log requests.  You can add your own PHP page to this module to perform the logging, and call it via AJAX.");
+			}
+		}
+
+		$surveyHash = @$data['surveyHash'];
+		$responseHash = @$data['responseHash'];
+		if(!empty($responseHash)){
+			// We're on a survey submission that already has a record id.
+			// We shouldn't pass the record id directly because it would be easy to spoof.
+			// Instead, we determine the record id from the response hash.
+
+			require_once APP_PATH_DOCROOT . "/Surveys/survey_functions.php";
+
+			// This method is called to set the $participant_id global;
+			global $participant_id;
+			\Survey::setSurveyVals($surveyHash);
+
+			$responseId = \decryptResponseHash($responseHash, $participant_id);
+
+			$result = $this->query("select record from redcap_surveys_response where response_id = $responseId");
+			$row = db_fetch_assoc($result);
+			$recordId = $row['record'];
+		}
+
+		if(!empty($recordId)){
+			$this->setRecordId($recordId);
+		}
+
+		return $this->log($data['message'], $parameters);
 	}
 
 	public function queryLogs($sql)
@@ -1354,7 +1449,7 @@ class AbstractExternalModule
 		foreach ($fields as $field) {
 			if ($field == 'username') {
 				$joinUsername = true;
-			} else if (isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$field])) {
+			} else if (isset(self::$LOG_PARAMETERS_ON_MAIN_TABLE[$field])) {
 				// do nothing
 			} else {
 				$parameterFields[] = $field;
@@ -1400,7 +1495,7 @@ class AbstractExternalModule
 
 				if ($field === 'username') {
 					$newField = 'redcap_user_information.username';
-				} else if(isset(self::$RESERVED_PARAMETER_NAMES_FLIPPED[$field])) {
+				} else if(isset(self::$LOG_PARAMETERS_ON_MAIN_TABLE[$field])) {
 					$newField = "redcap_external_modules_log.$field";
 				} else {
 					$newField = "$field.value";
@@ -1450,6 +1545,7 @@ class AbstractExternalModule
 
 	public static function init()
 	{
-		self::$RESERVED_PARAMETER_NAMES_FLIPPED = array_flip(self::$RESERVED_PARAMETER_NAMES);
+		self::$RESERVED_LOG_PARAMETER_NAMES_FLIPPED = array_flip(self::$RESERVED_LOG_PARAMETER_NAMES);
+		self::$LOG_PARAMETERS_ON_MAIN_TABLE = array_flip(array_merge(self::$RESERVED_LOG_PARAMETER_NAMES, self::$OVERRIDABLE_LOG_PARAMETERS_ON_MAIN_TABLE));
 	}
 }
