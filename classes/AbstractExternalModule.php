@@ -16,6 +16,7 @@ use UIState;
 class AbstractExternalModule
 {
 	const UI_STATE_OBJECT_PREFIX = 'external-modules.';
+	const EXTERNAL_MODULE_ID_STANDARD_WHERE_CLAUSE_PREFIX = "redcap_external_modules_log.external_module_id = (SELECT external_module_id FROM redcap_external_modules WHERE directory_prefix";
 
 	// check references to this to make sure moving vars was safe
 	// rename the following var?
@@ -284,16 +285,15 @@ class AbstractExternalModule
 			$keys[] = $this->prefixSettingKey($subSetting['key']);
 		}
 
-		$subSettings = [];
 		$rawSettings = ExternalModules::getProjectSettingsAsArray($this->PREFIX, self::requireProjectId());
-		$subSettingCount = count($rawSettings[$keys[0]]['value']);
-		for($i=0; $i<$subSettingCount; $i++){
-			$subSetting = [];
-			foreach($keys as $key){
-				$subSetting[$key] = $rawSettings[$key]['value'][$i];
-			}
 
-			$subSettings[] = $subSetting;
+		$subSettings = [];
+		foreach($keys as $key){
+			$values = $rawSettings[$key]['value'];
+			for($i=0; $i<count($values); $i++){
+				$value = $values[$i];
+				$subSettings[$i][$key] = $value;
+			}
 		}
 
 		return $subSettings;
@@ -1405,6 +1405,12 @@ class AbstractExternalModule
 		$sql = $this->getQueryLogsSql("$select where $sql");
 		$sql = substr_replace($sql, 'delete redcap_external_modules_log', 0, strlen($select));
 
+		if(strpos($sql, AbstractExternalModule::EXTERNAL_MODULE_ID_STANDARD_WHERE_CLAUSE_PREFIX) === false) {
+			// An external_module_id must have been specified in the where clause, preventing the standard clause from being included.
+			// This check also make sure that a bug in the framework doesn't remove logs for all modules (especially important when developing changes to log methods).
+			throw new Exception("Specifying an 'external_module_id' in the where clause for removeLogs() is not allowed to prevent modules from accidentally removing logs for other modules.");
+		}
+
 		return $this->query($sql);
 	}
 
@@ -1417,27 +1423,41 @@ class AbstractExternalModule
 			throw new Exception("Queries must start with a 'select' statement.");
 		}
 
-		$fields = [];
-		$this->processPseudoQuery($parsed['SELECT'], $fields, true);
-		$this->processPseudoQuery($parsed['WHERE'], $fields, false);
+		$selectFields = [];
+		$whereFields = [];
+		$orderByFields = [];
+		$this->processPseudoQuery($parsed['SELECT'], $selectFields, true);
+		$this->processPseudoQuery($parsed['WHERE'], $whereFields, false);
+		$this->processPseudoQuery($parsed['ORDER'], $orderByFields, false);
+		$fields = array_merge($selectFields, $whereFields, $orderByFields);
 
-		$projectId = $this->getProjectId();
-		if (!empty($projectId)) {
-			$projectClause = " and redcap_external_modules_log.project_id = $projectId ";
+		$standardWhereClauses = [];
+
+		if(!in_array('external_module_id', $whereFields)){
+			$standardWhereClauses[] = AbstractExternalModule::EXTERNAL_MODULE_ID_STANDARD_WHERE_CLAUSE_PREFIX . " = '{$this->PREFIX}')";
 		}
 
-
-		$standardWhereClauses = "where redcap_external_modules_log.external_module_id = (select external_module_id from redcap_external_modules where directory_prefix = '{$this->PREFIX}') $projectClause";
-		if($parsed['WHERE'] === null){
-			// Set it to an empty array, since array_merge() won't work on null.
-			$parsed['WHERE'] = [];
-		}
-		else{
-			$standardWhereClauses .= ' and ';
+		if(!in_array('project_id', $whereFields)){
+			$projectId = $this->getProjectId();
+			if (!empty($projectId)) {
+				$standardWhereClauses[] = "redcap_external_modules_log.project_id = $projectId";
+			}
 		}
 
-		$parsedStandardWhereClauses = $parser->parse($standardWhereClauses);
-		$parsed['WHERE'] = array_merge($parsedStandardWhereClauses['WHERE'], $parsed['WHERE']);
+		if(!empty($standardWhereClauses)){
+			$standardWhereClausesSql = 'where ' . implode(' and ', $standardWhereClauses);
+
+			if($parsed['WHERE'] === null){
+				// Set it to an empty array, since array_merge() won't work on null.
+				$parsed['WHERE'] = [];
+			}
+			else{
+				$standardWhereClausesSql .= ' and ';
+			}
+
+			$parsedStandardWhereClauses = $parser->parse($standardWhereClausesSql);
+			$parsed['WHERE'] = array_merge($parsedStandardWhereClauses['WHERE'], $parsed['WHERE']);
+		}
 
 		$creator = new PHPSQLCreator();
 		$select = $creator->create(['SELECT' => $parsed['SELECT']]);

@@ -42,7 +42,7 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 			<div class="modal-header">
 				<h4 class="modal-title clearfix">
 					<div class="float-left">Available Modules</div>
-					<div class="float-right" style="margin-left:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules"></div>
+					<div class="float-right" style="margin-left:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules" autofocus></div>
 				</h4>
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
@@ -192,10 +192,15 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 	var enabled = '<?=ExternalModules::KEY_ENABLED?>';
 	var overrideSuffix = '<?=ExternalModules::OVERRIDE_PERMISSION_LEVEL_SUFFIX?>';
 	$(function(){
+		var searchField = $('input#enabled-modules-search')
+
 		// Enable module search
-		$('input#enabled-modules-search').quicksearch('table#external-modules-enabled tbody tr', {
+		searchField.quicksearch('table#external-modules-enabled tbody tr', {
 			selector: 'td:eq(0)'
 		});
+
+		// The focus() method is used here because the 'autofocus' attribute cannot be used since it interferes with the 'autofocus' attribute on the search in the disabled modules modal.
+		searchField[0].focus()
 	});
 </script>
 

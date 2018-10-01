@@ -790,14 +790,75 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertTrue(true); // Each test requires an assertion
 	}
 
-	function testGetQueryLogsSql_noWhereClause()
+	function testQueryLogs_orderBy(){
+
+		$m = $this->getInstance();
+
+		// Just make sure this query is parsable, and runs without an exception.
+		$m->queryLogs("select 1 where 1 = 2 order by log_id");
+
+		$this->assertTrue(true); // Each test requires an assertion
+	}
+
+	function testGetQueryLogsSql_moduleId()
 	{
 		$m = $this->getInstance();
 
-		$sql = $m->getQueryLogsSql("select log_id");
+		$columnName = 'external_module_id';
 
-		// Make sure the standard where clause is still present.
-		$this->assertTrue(strpos($sql, "WHERE redcap_external_modules_log.external_module_id") !== false);
+		// Make sure that when no where clause is present, a where clause for the current module is added
+		$sql = $m->getQueryLogsSql("select log_id");
+		$this->assertEquals(1, substr_count($sql, AbstractExternalModule::EXTERNAL_MODULE_ID_STANDARD_WHERE_CLAUSE_PREFIX . " = '" . TEST_MODULE_PREFIX . "')"));
+
+		$moduleId = rand();
+		$overrideClause = "$columnName = $moduleId";
+		$sql = $m->getQueryLogsSql("select 1 where $overrideClause");
+
+		// Make sure there is only one clause related to the module id.
+		$this->assertEquals(1, substr_count($sql, $columnName));
+
+		// Make sure our override clause has replaced the the clause for the current module.
+		$this->assertEquals(1, substr_count($sql, $overrideClause));
+	}
+
+	function testGetQueryLogsSql_overrideProjectId()
+	{
+		$m = $this->getInstance();
+
+		$columnName = 'project_id';
+
+		// Make sure that when no where clause is present, a where clause for the current project is added
+		$projectId = '1';
+		$_GET['pid'] = $projectId;
+		$sql = $m->getQueryLogsSql("select log_id");
+		$this->assertEquals(1, substr_count($sql, "$columnName = $projectId"));
+
+		$projectId = '2';
+		$overrideClause = "$columnName = $projectId";
+		$sql = $m->getQueryLogsSql("select 1 where $overrideClause");
+
+		// Make sure there is only one clause related to the project id.
+		$this->assertEquals(1, substr_count($sql, $columnName));
+
+		// Make sure our override clause has replaced the the clause for the current project.
+		$this->assertEquals(1, substr_count($sql, $overrideClause));
+	}
+
+	function testRemoveLogs()
+	{
+		$m = $this->getInstance();
+		$logId1 = $m->log('one');
+		$logId2 = $m->log('two');
+
+		$m->removeLogs("log_id = $logId1");
+
+		$this->assertThrowsException(function() use ($m){
+			$m->removeLogs('');
+		}, 'must specify a where clause');
+
+		$this->assertThrowsException(function() use ($m){
+			$m->removeLogs('external_module_id = 1');
+		}, 'not allowed to prevent modules from accidentally removing logs for other modules');
 	}
 
 	function testExceptionOnMissingMethod()
@@ -808,5 +869,48 @@ class AbstractExternalModuleTest extends BaseTest
 			$m = $this->getInstance();
 			$m->someMethodThatDoesntExist();
 		}, 'method does not exist');
+	}
+
+	function testGetSubSettings()
+	{
+		$_GET['pid'] = 1;
+		$m = $this->getInstance();
+
+		$settingValues = [
+			// Make sure the first setting is no longer being used to detect any lengths by simulated a new/empty setting.
+			'key1' => [],
+
+			// These settings each intentionally have difference lengths to make sure they're still returned appropriately.
+			'key2' => ['a', 'b', 'c'],
+			'key3' => [1,2,3,4,5],
+			'key4' => [true, false]
+		];
+
+		$subSettingsConfig = [];
+		foreach($settingValues as $key=>$values){
+			$m->setProjectSetting($key, $values);
+
+			$subSettingsConfig[] = [
+				'key' => $key
+			];
+		}
+
+		$subSettingsKey = 'sub-settings-key';
+		$this->setConfig([
+			'project-settings' => [
+				[
+					'key' => $subSettingsKey,
+					'type' => 'sub_settings',
+					'sub_settings' => $subSettingsConfig
+				]
+			]
+		]);
+
+		$subSettingResults = $m->getSubSettings($subSettingsKey);
+		foreach($settingValues as $key=>$values){
+			for($i=0; $i<count($values); $i++){
+				$this->assertSame($settingValues[$key][$i], $subSettingResults[$i][$key]);
+			}
+		}
 	}
 }
