@@ -1,6 +1,12 @@
 <?php
 namespace ExternalModules;
 
+$page = rawurldecode(urldecode($_GET['page']));
+if($page === '/manager/rich-text/get-file.php'){
+	require_once __DIR__ . $page;
+	return;
+}
+
 $noAuth = isset($_GET['NOAUTH']);
 if($noAuth){
 	// This must be defined at the top before redcap_connect.php is required.
@@ -11,7 +17,6 @@ require_once dirname(__FILE__) . '/classes/ExternalModules.php';
 
 use Exception;
 
-$page = rawurldecode(urldecode($_GET['page']));
 $pid = @$_GET['pid'];
 
 $prefix = $_GET['prefix'];

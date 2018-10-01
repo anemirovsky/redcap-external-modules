@@ -1907,8 +1907,13 @@ class ExternalModules
 			$get .= "&$key=$value";
 		}
 
-		$base = $useApiEndpoint ? APP_PATH_WEBROOT_FULL."api/?type=module&" : self::$BASE_URL."?";
+		$base = $useApiEndpoint ? self::getModuleAPIUrl() : self::$BASE_URL."?";
 		return $base . "prefix=$prefix&page=" . urlencode($page) . $get;
+	}
+
+	static function getModuleAPIUrl()
+	{
+		return APP_PATH_WEBROOT_FULL."api/?type=module&";
 	}
 	
 	# Returns boolean regarding if the module is an example module in the example_modules directory.
