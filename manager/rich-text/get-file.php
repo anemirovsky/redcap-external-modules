@@ -2,7 +2,7 @@
 namespace ExternalModules;
 define('NOAUTH', true);
 set_include_path('.' . PATH_SEPARATOR . get_include_path());
-require_once '../../classes/ExternalModules.php';
+require_once __DIR__ . '/../../classes/ExternalModules.php';
 
 
 $filename = $_GET['file'];
@@ -22,7 +22,7 @@ $ensureEDocIsRichText = function() use ($prefix, $pid, $edocId){
 	}
 
 	// Only allow rich text edocs to be accessed publicly.
-	throw new Exception("EDoc $edocId was not found on project $pid!");
+	throw new \Exception("EDoc $edocId was not found on project $pid!");
 };
 
 $tempDirPath = sys_get_temp_dir() . '/external-module-rich-text-file-cache/';
