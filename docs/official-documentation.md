@@ -110,7 +110,7 @@ Below is a *mostly* comprehensive list of all items that can be added to the  **
 	* **branchingLogic** is an structure which represents a condition or a set of conditions that defines whether the field should be displayed. See examples at the end of this section.
 	* When type = **sub_settings**, the sub_settings element can specify a group of items that can be repeated as a group if the sub_settings itself is repeatable. The settings within sub_settings follow the same specification here.  It is also possible to nest sub_settings within sub_settings.
 	* As a reminder, true and false are specified as their actual values (true/false not as the strings "true"/"false"). Other than that, all values and variables are strings.
-	* Both project-settings and system-settings may have a **default** value provided (using the attribute "default"). This will set the value of a setting when the module is enabled either in the project or system, respectively.
+	* **DEPRECATED (for now): Default values do NOT currently work consistently, and will likely need to be re-implemented.** Both project-settings and system-settings may have a **default** value provided (using the attribute "default"). This will set the value of a setting when the module is enabled either in the project or system, respectively.
 * If your JSON is not properly specified, an Exception will be thrown.
 
 #### Examples of branching logic
@@ -586,8 +586,7 @@ For reference, below is a nearly comprehensive example of the types of things th
       {
          "key": "instructions-field",
          "name": "Instructions text box",
-         "type": "textarea",
-         "default": "Please complete the things you need to do."
+         "type": "textarea"
       },
       {
          "key": "custom-field1",
