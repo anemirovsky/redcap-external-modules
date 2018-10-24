@@ -1,4 +1,4 @@
-**PULL REQUESTS:** Please create pull requests against the **testing** branch (as opposed to **master**).
+**PULL REQUESTS:** Please create pull requests against the **testing** branch.
 
 # REDCap External Modules
 
