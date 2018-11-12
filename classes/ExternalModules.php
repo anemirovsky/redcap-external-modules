@@ -93,6 +93,8 @@ class ExternalModules
 	private static $deletedModules;
 
 	private static $configs = array();
+	
+	private static $bundledModules;
 
 	# two reserved settings that are there for each project
 	# KEY_VERSION, if present, denotes that the project is enabled system-wide
@@ -247,10 +249,10 @@ class ExternalModules
 	{
 		// Get module directories
 		if (defined("APP_PATH_EXTMOD")) {
-			$modulesDirectories = [dirname(APP_PATH_DOCROOT).DS.'modules'.DS, APP_PATH_EXTMOD.'example_modules'.DS];
+			$modulesDirectories = [APP_PATH_DOCROOT.'Modules'.DS, dirname(APP_PATH_DOCROOT).DS.'modules'.DS, APP_PATH_EXTMOD.'example_modules'.DS];
 		} else {
-			$modulesDirectories = [dirname(APP_PATH_DOCROOT).DS.'modules'.DS, dirname(APP_PATH_DOCROOT).DS.'external_modules'.DS.'example_modules'.DS];
-		}		
+			$modulesDirectories = [APP_PATH_DOCROOT.'Modules'.DS, dirname(APP_PATH_DOCROOT).DS.'modules'.DS, dirname(APP_PATH_DOCROOT).DS.'external_modules'.DS.'example_modules'.DS];
+		}
 		// Add any alternate module directories
 		$modulesDirectoriesAlt = self::getAltModuleDirectories();
 		foreach ($modulesDirectoriesAlt as $thisDir) {
@@ -269,11 +271,38 @@ class ExternalModules
 		foreach ($modulesDirectories as $dir) {
 			foreach (getDirFiles($dir) as $module) {
 			    // Use the module directory as a key to prevent duplicates from alternate module directories.
-				$modules[$module] = true;
+				if (is_dir($dir.$module)) {
+					$modules[$module] = true;
+				}
 			}
 		}
 		// Return directories array
 		return array_keys($modules);
+	}
+
+	// Return boolean regarding if the module is a bundled module
+	public static function isBundledModule($prefix)
+	{
+		// Initialize as array
+		self::initBundledModules();
+		// Is it in the array?
+		return isset(self::$bundledModules[$prefix]);
+	}
+
+	// Initialize the bundled modules array
+	public static function initBundledModules()
+	{
+		if (is_array(self::$bundledModules)) return;
+		// Initialize as array
+		self::$bundledModules = array();	
+		// Get all module directorys in the redcap_vX.X.X/Modules/ directory
+		$dir = APP_PATH_DOCROOT.'Modules'.DS;
+		if (!is_dir($dir)) return;
+		foreach (getDirFiles($dir) as $folder) {
+			if (!is_dir($dir.$folder)) continue;
+			list ($thisPrefix, $thisVersion) = self::getParseModuleDirectoryPrefixAndVersion($folder);
+			self::$bundledModules[$thisPrefix] = $thisVersion;
+		}
 	}
 
 	# initializes the External Module aparatus
@@ -760,8 +789,33 @@ class ExternalModules
 		}
 	}
 
+	static function getSettingDefaultFromConfig($moduleDirectoryPrefix, $key, $systemSetting=true)
+	{
+		$settingsName = $systemSetting ? 'system-settings' : 'project-settings';
+		$config = self::getConfig($moduleDirectoryPrefix);
+		if (!isset($config[$settingsName])) return null;
+		foreach ($config[$settingsName] as $attr) {
+			if ($attr['key'] != $key) continue;
+			return isset($attr['default']) ? $attr['default'] : null;
+		}
+		return null;
+	}
+
 	static function getSystemSetting($moduleDirectoryPrefix, $key)
 	{
+		// For bundled modules, their systems will not be stored in the db table
+		if (self::isBundledModule($moduleDirectoryPrefix)) {
+			// If asking for the version of a module that is bundled, always return the 
+			// bundled version number (in case other versions exist elsewhere)
+			if ($key == self::KEY_VERSION) {
+				return self::$bundledModules[$moduleDirectoryPrefix];
+			} 
+			// Other module attribute from default in config.json
+			else {
+				return self::getSettingDefaultFromConfig($moduleDirectoryPrefix, $key, true);
+			}
+		}
+		// Return setting from db table
 		return self::getSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key);
 	}
 
@@ -1717,14 +1771,26 @@ class ExternalModules
 
 		// Only attempt to detect enabled modules if the external module tables exist.
 		if (self::areTablesPresent()) {
+			self::initBundledModules();
 			$result = self::getSettings(null, null, array(self::KEY_VERSION, self::KEY_ENABLED));
-
+			
 			// Split results into version and enabled arrays: this seems wasteful, but using one
             // query above, we can then validate which EMs/versions are valid before we build
             // out which are enabled and how they are enabled
             $result_versions = array();
 			$result_enabled = array();
+			
+			// Add bundled versions first since they take priority
+			foreach (self::$bundledModules as $prefix=>$version) {
+				$result_versions[] = ['directory_prefix'=>$prefix, 'project_id'=>null, 'key'=>'version', 'value'=>$version, 'type'=>'string'];
+				$result_enabled[] = ['directory_prefix'=>$prefix, 'project_id'=>null, 'key'=>'enabled', 'value'=>'1', 'type'=>'boolean'];
+			}
+			
+			// Add to respective arrays from db table
 			while($row = self::validateSettingsRow(db_fetch_assoc($result))) {
+				// Skip bundled modules that have already been entered
+				if (self::isBundledModule($row['directory_prefix'])) continue;
+				// Add db row values to arrays
 				$key = $row['key'];
 				if ($key == self::KEY_VERSION) {
 					$result_versions[] = $row;
@@ -2006,6 +2072,7 @@ class ExternalModules
 		}
 
 		$configFilePath = self::getModuleDirectoryPath($prefix, $version)."/config.json";
+		
 		$config = @self::$configs[$prefix][$version];
 		if($config === null){
 			$fileTesting = file_get_contents($configFilePath);

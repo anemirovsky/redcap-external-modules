@@ -10,6 +10,11 @@ require_once dirname(dirname(dirname(__FILE__))) . '/classes/ExternalModules.php
 	if (!isset($_GET['pid'])) {
 		$enabledModules = ExternalModules::getEnabledModules();
 		$disabledModuleConfigs = ExternalModules::getDisabledModuleConfigs($enabledModules);
+		foreach ($disabledModuleConfigs as $moduleDirectoryPrefix => $versions) {
+			if (ExternalModules::isBundledModule($moduleDirectoryPrefix)) {
+				unset($disabledModuleConfigs[$moduleDirectoryPrefix]);
+			}
+		}
 
 		if (empty($disabledModuleConfigs)) {
 			echo 'None';

@@ -207,8 +207,13 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 <table id='external-modules-enabled' class="table">
 	<?php
 
-	$versionsByPrefix = ExternalModules::getEnabledModules($_GET['pid']);
 	$configsByPrefix = array();
+	$versionsByPrefix = ExternalModules::getEnabledModules($_GET['pid']);
+	foreach ($versionsByPrefix as $prefix => $version) {
+		if (ExternalModules::isBundledModule($prefix)) {
+			unset($versionsByPrefix[$prefix]);
+		}
+	}
 
 	if (empty($versionsByPrefix)) {
 		echo 'None';
