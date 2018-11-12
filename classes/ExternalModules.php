@@ -805,11 +805,14 @@ class ExternalModules
 	{
 		// For bundled modules, their systems will not be stored in the db table
 		if (self::isBundledModule($moduleDirectoryPrefix)) {
-			// If asking for the version of a module that is bundled, always return the 
-			// bundled version number (in case other versions exist elsewhere)
+			// Always return the bundled version number (in case other versions exist elsewhere)
 			if ($key == self::KEY_VERSION) {
 				return self::$bundledModules[$moduleDirectoryPrefix];
 			} 
+			// Always return the bundled module as eanbled
+			elseif ($key == self::KEY_ENABLED) {
+				return true;
+			}
 			// Other module attribute from default in config.json
 			else {
 				return self::getSettingDefaultFromConfig($moduleDirectoryPrefix, $key, true);

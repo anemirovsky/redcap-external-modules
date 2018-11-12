@@ -209,11 +209,6 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 
 	$configsByPrefix = array();
 	$versionsByPrefix = ExternalModules::getEnabledModules($_GET['pid']);
-	foreach ($versionsByPrefix as $prefix => $version) {
-		if (ExternalModules::isBundledModule($prefix)) {
-			unset($versionsByPrefix[$prefix]);
-		}
-	}
 
 	if (empty($versionsByPrefix)) {
 		echo 'None';
@@ -244,6 +239,7 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 			}
 
 
+			$isBundled = ExternalModules::isBundledModule($prefix);
 			$configsByPrefix[$prefix] = $config;
 			$enabled = false;
 			$system_enabled = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_ENABLED);
@@ -254,14 +250,15 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 			}
 			if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
 			?>
-				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
+				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>' data-bundled='<?= $isBundled?'1':'0' ?>'>
 					<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?>
-                            <?php if ($system_enabled && SUPER_USER) print "<span class='label label-warning badge badge-warning'>Enabled for All Projects</span>" ?>
+                            <?php if ($system_enabled && SUPER_USER && $isBundled) print "<span class='label label-success badge badge-success'><i class='fas fa-award'></i> Bundled with REDCap</span>" ?>
+                            <?php if ($system_enabled && SUPER_USER && !$isBundled) print "<span class='label label-warning badge badge-warning'>Enabled for All Projects</span>" ?>
                             <?php if ($isDiscoverable && SUPER_USER) print "<span class='label label-info badge badge-info'>Discoverable</span>" ?>
                         </div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div><div class='external-modules-byline'>
 <?php
 	if (SUPER_USER && !isset($_GET['pid'])) {
-        if ($config['authors']) {
+        if ($config['authors'] && !$isBundled) {
                 $names = array();
                 foreach ($config['authors'] as $author) {
                         $name = $author['name'];
@@ -293,10 +290,10 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 							&& (!isset($_GET['pid']) || (isset($_GET['pid']) && self::hasProjectSettingSavePermission($prefix))) && $module_instance->redcap_module_configure_button_display($_GET['pid'])){?>
 							<button class='external-modules-configure-button'>Configure</button>
 						<?php } ?>
-						<?php if(SUPER_USER) { ?>
+						<?php if(SUPER_USER && !$isBundled) { ?>
 							<button class='external-modules-disable-button'>Disable</button>
 						<?php } ?>
-						<?php if(!isset($_GET['pid'])) { ?>
+						<?php if(!isset($_GET['pid']) && !$isBundled) { ?>
 							<button class='external-modules-usage-button' style="min-width: 90px">View Usage</button>
 						<?php } ?>
 					</td>
