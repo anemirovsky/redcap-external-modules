@@ -1308,9 +1308,11 @@ class AbstractExternalModule
 
 	private function getIPSQL($ip)
 	{
+		$username = ExternalModules::getUsername();
+		
 		if(
 			empty($ip)
-			&& !empty(ExternalModules::getUsername()) // Only log the ip if a user is currently logged in
+			&& !empty($username) // Only log the ip if a user is currently logged in
 			&& !$this->isSurveyPage() // Don't log IPs for surveys
 		){
 			// The IP could contain multiple comma separated addresses (if proxies are used).
