@@ -29,7 +29,7 @@ if(empty($prefix)){
 
 $version = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_VERSION);
 if(empty($version)){
-	throw new Exception("The requested module is currently disabled systemwide.");
+	throw new Exception("The module with prefix '$prefix' is currently disabled systemwide.");
 }
 
 $config = ExternalModules::getConfig($prefix, $version);

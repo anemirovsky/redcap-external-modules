@@ -9,7 +9,19 @@ if (!empty($extModLinks)) {
 	$(function () {
 		var items = '';
 		<?php
-		foreach($extModLinks as $name=>$link){
+        foreach($extModLinks as $name=>$link){
+            $prefix = $link['prefix'];
+            $module_instance = ExternalModules::getModuleInstance($prefix);
+            try {
+                $new_link = $module_instance->redcap_module_link_check_display(null, $link);
+                if ($new_link) {
+                    if (is_array($new_link)) {
+                        $link = $new_link;
+                    }
+                }
+            } catch(\Exception $e) {
+                ExternalModules::sendAdminEmail("An exception was thrown when generating control center links", $e->__toString(), $prefix);
+            }
 			?>
 			items += '<div class="cc_menu_item"><img src="<?php
 				if (file_exists(ExternalModules::$BASE_PATH . 'images' . DS . $link['icon'] . '.png')) {
@@ -19,7 +31,7 @@ if (!empty($extModLinks)) {
 				}
 				?>">';
 			items += '&nbsp; ';
-			items += '<a href="<?= $link['url'] ?>" target="<?= $link["target"]?>"><?= $name ?></a>';
+			items += '<a href="<?= $link['url'] ?>" target="<?= $link["target"]?>"><?= $link["name"] ?></a>';
 			items += '</div>';
 
 			<?php
