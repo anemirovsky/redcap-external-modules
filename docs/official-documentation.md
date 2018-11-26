@@ -322,7 +322,7 @@ $value = $module->getProjectSetting('my-project-setting');
 
 ### Available developer methods in External Modules
 
-Listed below are the publicly supported methods that module creators may utilize in their modules. **DO NOT** reference any other methods or files (like the *ExternalModules* class) as they could change at any time.
+Listed below are the publicly supported methods that module creators may utilize in their modules. **DO NOT** reference any other methods or files (like the *ExternalModules* class) as they could change at any time.  If there is a method not listed here that you believe should be supported, feel free to request it via a GitHub issue or pull request. 
 
 #### PHP Module Object
 Since each module's main class will extend *AbstractExternalModule*.  The following built-in methods are available on each module's main class.  They can be called by using **$this** (e.g., `$this->getModuleName()`).
