@@ -843,7 +843,7 @@ class AbstractExternalModule
                     }
                 }
             }
-        } else if (in_array($metadata[$fieldName]['text_validation_type_or_show_slider_number'], array_keys($dateFormats)) && $value != "") {
+        } else if (in_array($metadata[$fieldName]['text_validation_type_or_show_slider_number'], array_keys($dateFormats)) && $params['value'] != "") {
             $label = date($dateFormats[$metadata[$fieldName]['text_validation_type_or_show_slider_number']], strtotime($params['value']));
         }
         return $label;
