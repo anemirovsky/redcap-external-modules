@@ -2191,7 +2191,12 @@ class ExternalModules
 
 			$result = db_query($sql);
 
-			$matchingProjects = [];
+			$matchingProjects = [
+				[
+					"id" => "",
+					"text" => "--- None ---"
+				]
+			];
 
 			while($row = db_fetch_assoc($result)) {
 				$matchingProjects[] = [
