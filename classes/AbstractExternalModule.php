@@ -53,43 +53,26 @@ class AbstractExternalModule
 		$systemSettings = $config['system-settings'];
 		$projectSettings = $config['project-settings'];
 
-		$handleDuplicate = function($key, $type){
-			throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" $type setting multiple times!");
+		$settingKeys = [];
+		$checkSettings = function($settings) use (&$settingKeys, &$checkSettings){
+			foreach($settings as $details) {
+				$key = $details['key'];
+				self::checkSettingKey($key);
+
+				if (isset($settingKeys[$key])) {
+					throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" setting multiple times!");
+				} else {
+					$settingKeys[$key] = true;
+				}
+
+				if($details['type'] === 'sub_settings'){
+					$checkSettings($details['sub_settings']);
+				}
+			}
 		};
 
-		$systemSettingKeys = array();
-		foreach($systemSettings as $details){
-			$key = $details['key'];
-			self::checkSettingKey($key);
-
-			if(isset($systemSettingKeys[$key])){
-				$handleDuplicate($key, 'system');
-			}
-			else{
-				$systemSettingKeys[$key] = true;
-			}
-		}
-
-		$projectSettingKeys = array();
-		foreach($projectSettings as $details){
-			$key = $details['key'];
-			self::checkSettingKey($key);
-
-			if(array_key_exists($key, $systemSettingKeys)){
-				throw new Exception("The \"" . $this->PREFIX . "\" module defines the \"$key\" setting on both the system and project levels.");
-			}
-
-			// if(array_key_exists('default', $details)){
-				// throw new Exception("The \"" . $this->PREFIX . "\" module defines a default value for the the \"$key\" project setting.  Default values are only allowed on system settings.");
-			// }
-
-			if(isset($projectSettingKeys[$key])){
-				$handleDuplicate($key, 'project');
-			}
-			else{
-				$projectSettingKeys[$key] = true;
-			}
-		}
+		$checkSettings($systemSettings);
+		$checkSettings($projectSettings);
 	}
 
 	# checks a config.json setting key $key for validity
