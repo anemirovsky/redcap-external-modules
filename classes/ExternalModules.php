@@ -1696,16 +1696,14 @@ class ExternalModules
 	{
 		if ($version && strpos($_SERVER['REQUEST_URI'], '/manager/ajax/enable-module.php') !== false && $prefix == $_POST['prefix'] && $_POST['version'] != $version) {
             // We are in the process of switching an already enabled module from one version to another.
-            // We need to exclude the old version of the module to ensure that the hook for the new version is the one that executed.
+            // We need to exclude the old version of the module to ensure that the hook for the new version is the one that is executed.
 			return true;
 		}
 
-		$modulePath = self::getModuleDirectoryPath($prefix, $version);
-		$doesDirectoryExist = (file_exists($modulePath) && is_dir($modulePath));
-
+		// The fake unit testing modules are not currently ever enabled in the DB,
+		// but we may as well leave this check in place in case that changes in the future.
 		$isTestPrefix = strpos($prefix, self::TEST_MODULE_PREFIX) === 0;
-
-		if($doesDirectoryExist && $isTestPrefix && !self::isTesting($prefix)){
+		if($isTestPrefix && !self::isTesting($prefix)){
 			// This php process is not running unit tests.
 			// Ignore the test prefix so it doesn't interfere with this process.
 			return true;
