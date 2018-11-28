@@ -1567,10 +1567,6 @@ class ExternalModules
 
 			$classNameWithNamespace = "\\$namespace\\$className";
 
-			if(class_exists($classNameWithNamespace)){
-				throw new Exception("The " . __FUNCTION__ . "() method attempted to load the '$prefix' module class twice.  This should never happen, and suggests that there is an issue with the way modules are loaded.");
-			}
-
 			$classFilePath = "$modulePath/$className.php";
 
 			if(!file_exists($classFilePath)){
