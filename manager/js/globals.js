@@ -862,8 +862,6 @@ $(function(){
 		// find the module directory prefix from the <tr>
 		var moduleDirectoryPrefix = $(this).closest('tr').data('module');
 		configureModal.data('module', moduleDirectoryPrefix);
-		
-		var isBundled = $(this).closest('tr').data('bundled');
 
 		var config = ExternalModules.configsByPrefix[moduleDirectoryPrefix];
 		configureModal.find('.module-name').html(config.name);
@@ -913,12 +911,6 @@ $(function(){
 				}
 
 				var savedSettings = data.settings;
-				
-				// If module is bundled, then do not show row to enable or make discoverable (those are controlled by REDCap)
-				if (isBundled) {
-					delete config['system-settings'][0];
-					delete config['system-settings'][1];
-				}
 
 				// Get the html for the configuration
 				var settingsHtml = "";

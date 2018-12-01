@@ -209,18 +209,22 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 
 	$configsByPrefix = array();
 	$versionsByPrefix = ExternalModules::getEnabledModules($_GET['pid']);
+	
+	// Remove bundled modules or those without a config
+	foreach ($versionsByPrefix as $prefix => $version) {
+		$config = ExternalModules::getConfig($prefix, $version, @$_GET['pid']);
+		$isBundled = ExternalModules::isBundledModule($prefix);
+		if($isBundled || empty($config)){
+			unset($versionsByPrefix[$prefix]);
+		}
+	}
 
 	if (empty($versionsByPrefix)) {
 		echo 'None';
 	} else {
 		foreach ($versionsByPrefix as $prefix => $version) {
 			$config = ExternalModules::getConfig($prefix, $version, @$_GET['pid']);
-
-			if(empty($config)){
-				// This module's directory may have been removed while it was still enabled.
-				continue;
-			}
-
+			
 			## Add resources for custom javascript fields
 			foreach(array_merge($config['project-settings'],$config['system-settings']) as $configRow) {
 				if($configRow['source']) {
@@ -238,8 +242,6 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 				}
 			}
 
-
-			$isBundled = ExternalModules::isBundledModule($prefix);
 			$configsByPrefix[$prefix] = $config;
 			$enabled = false;
 			$system_enabled = ExternalModules::getSystemSetting($prefix, ExternalModules::KEY_ENABLED);
@@ -250,10 +252,9 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 			}
 			if ((isset($_GET['pid']) && $enabled) || (!isset($_GET['pid']) && isset($config['system-settings']))) {
 			?>
-				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>' data-bundled='<?= $isBundled?'1':'0' ?>'>
+				<tr data-module='<?= $prefix ?>' data-version='<?= $version ?>'>
 					<td><div class='external-modules-title'><?= $config['name'] . ' - ' . $version ?>
-                            <?php if ($system_enabled && SUPER_USER && $isBundled) print "<span class='label label-success badge badge-success'><i class='fas fa-award'></i> Bundled with REDCap</span>" ?>
-                            <?php if ($system_enabled && SUPER_USER && !$isBundled) print "<span class='label label-warning badge badge-warning'>Enabled for All Projects</span>" ?>
+                            <?php if ($system_enabled && SUPER_USER) print "<span class='label label-warning badge badge-warning'>Enabled for All Projects</span>" ?>
                             <?php if ($isDiscoverable && SUPER_USER) print "<span class='label label-info badge badge-info'>Discoverable</span>" ?>
                         </div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div><div class='external-modules-byline'>
 <?php
