@@ -1782,25 +1782,56 @@ class ExternalModules
             // out which are enabled and how they are enabled
             $result_versions = array();
 			$result_enabled = array();
-			
-			// Add bundled versions first since they take priority
-			foreach (self::$bundledModules as $prefix=>$version) {
-				$result_versions[] = ['directory_prefix'=>$prefix, 'project_id'=>null, 'key'=>'version', 'value'=>$version, 'type'=>'string'];
-				$result_enabled[] = ['directory_prefix'=>$prefix, 'project_id'=>null, 'key'=>'enabled', 'value'=>'1', 'type'=>'boolean'];
-			}
+			$prefix_version = array();
 			
 			// Add to respective arrays from db table
 			while($row = self::validateSettingsRow(db_fetch_assoc($result))) {
-				// Skip bundled modules that have already been entered
-				if (self::isBundledModule($row['directory_prefix'])) continue;
 				// Add db row values to arrays
 				$key = $row['key'];
 				if ($key == self::KEY_VERSION) {
 					$result_versions[] = $row;
+					$prefix_version[$row['directory_prefix']] = $row['value'];
 				} else if($key == self::KEY_ENABLED) {
-					$result_enabled[] = $row;
+					if (!self::isBundledModule($row['directory_prefix'])) { // If bundled, we'll set it as enabled below
+						$result_enabled[] = $row;
+					}
 				} else {
 					throw new Exception("Unexpected key: $key");
+				}
+			}
+			
+			## AUTO-ENABLE BUNDLED MODULES
+			// Skip enabling of bundled module if we're interatively trying to enable it right now
+			if (!isset($GLOBALS['rcem_bundled_module_enable'])) 
+			{
+				// Add bundled versions first since they take priority
+				foreach (self::$bundledModules as $prefix=>$version) 
+				{			
+					// Make sure we set the bundle module as always enabled (and enabled in ALL projects, if project-level)
+					$result_enabled[] = ['directory_prefix'=>$prefix, 'project_id'=>null, 'key'=>self::KEY_ENABLED, 'value'=>'1', 'type'=>'boolean'];
+					
+					// Either not installed or previous version installed, so enable bundled version
+					$bundledModuleEnabled = isset($prefix_version[$prefix]);					
+					// ENABLE the bundled module
+					$enableBundledModule = (!$bundledModuleEnabled || ($bundledModuleEnabled && $version != $prefix_version[$prefix]));
+					if ($enableBundledModule) {
+						// Set flag to skip this part if called interatively in enableForProject()
+						$GLOBALS['rcem_bundled_module_enable'] = $prefix;
+						// Remove existing entry from arrays first
+						if ($bundledModuleEnabled) {
+							foreach ($result_versions as $key=>$attr) {
+								if ($attr['directory_prefix'] == $prefix) unset($result_versions[$key]);
+							}
+							// Disable module first (if other version is enabled)
+							self::disable($prefix, false);
+						}
+						// Enable the bundled version of the module
+						self::enableAndCatchExceptions($prefix, $version);
+						// Remove flag
+						unset($GLOBALS['rcem_bundled_module_enable']);
+						// Manually set the module values in the arrays now that we've enable the module
+						$result_versions[] = ['directory_prefix'=>$prefix, 'project_id'=>null, 'key'=>self::KEY_VERSION, 'value'=>$version, 'type'=>'string'];
+					}
 				}
 			}
 
@@ -2268,6 +2299,9 @@ class ExternalModules
 	public static function getEnabledVersion($prefix)
 	{
 		$versionsByPrefix = self::getSystemwideEnabledVersions();
+		if (!isset($versionsByPrefix[$prefix]) && isset(self::$bundledModules[$prefix])) {
+			$versionsByPrefix[$prefix] = self::$bundledModules[$prefix];
+		}
 		return @$versionsByPrefix[$prefix];
 	}
 
