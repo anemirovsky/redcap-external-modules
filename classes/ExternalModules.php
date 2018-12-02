@@ -300,7 +300,13 @@ class ExternalModules
 		if (!is_dir($dir)) return;
 		foreach (getDirFiles($dir) as $folder) {
 			if (!is_dir($dir.$folder)) continue;
+			// Parse prefix and version
 			list ($thisPrefix, $thisVersion) = self::getParseModuleDirectoryPrefixAndVersion($folder);
+			// If multiple versions exist somehow, then only use the highest version
+			if (isset(self::$bundledModules[$thisPrefix]) && version_compare($thisVersion, $bundledModules[$thisPrefix], '<')) {
+				continue;
+			}
+			// Add to array
 			self::$bundledModules[$thisPrefix] = $thisVersion;
 		}
 	}
