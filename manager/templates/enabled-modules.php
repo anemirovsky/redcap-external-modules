@@ -42,7 +42,7 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 			<div class="modal-header">
 				<h4 class="modal-title clearfix">
 					<div class="float-left">Available Modules</div>
-					<div class="float-right" style="margin-left:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules"></div>
+					<div class="float-right" style="margin-left:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules" autofocus></div>
 				</h4>
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
