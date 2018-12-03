@@ -1794,9 +1794,7 @@ class ExternalModules
 					$result_versions[] = $row;
 					$prefix_version[$row['directory_prefix']] = $row['value'];
 				} else if($key == self::KEY_ENABLED) {
-					if (!self::isBundledModule($row['directory_prefix'])) { // If bundled, we'll set it as enabled below
-						$result_enabled[] = $row;
-					}
+					$result_enabled[] = $row;
 				} else {
 					throw new Exception("Unexpected key: $key");
 				}
@@ -1808,10 +1806,7 @@ class ExternalModules
 			{
 				// Add bundled versions first since they take priority
 				foreach (self::$bundledModules as $prefix=>$version) 
-				{			
-					// Make sure we set the bundle module as always enabled (and enabled in ALL projects, if project-level)
-					$result_enabled[] = ['directory_prefix'=>$prefix, 'project_id'=>null, 'key'=>self::KEY_ENABLED, 'value'=>'1', 'type'=>'boolean'];
-					
+				{
 					// Either not installed or previous version installed, so enable bundled version
 					$bundledModuleEnabled = isset($prefix_version[$prefix]);					
 					// ENABLE the bundled module
