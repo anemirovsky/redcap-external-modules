@@ -2906,7 +2906,10 @@ class ExternalModules
 		// Of the enabled projects, find those that require user permissions to configure in project
 		$enabledModulesReqConfigPerm = self::getModulesRequireConfigPermission(array_keys($enabledModules));
 		// Obtain the title of each module from its config
-		foreach (array_keys($enabledModules) as $thisModule) {		
+		foreach (array_keys($enabledModules) as $thisModule) {
+			// Ignore any bundled modules
+			if (self::isBundledModule($thisModule)) continue;
+			// Get config
 			$config = self::getConfig($thisModule, null, $project_id);
 			if (!isset($config['name'])) continue;
 			// Add attributes to array
