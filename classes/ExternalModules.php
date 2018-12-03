@@ -820,7 +820,6 @@ class ExternalModules
 
 	static function getSystemSetting($moduleDirectoryPrefix, $key)
 	{
-		// Return setting from db table
 		return self::getSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key);
 	}
 
@@ -1788,7 +1787,6 @@ class ExternalModules
 			
 			// Add to respective arrays from db table
 			while($row = self::validateSettingsRow(db_fetch_assoc($result))) {
-				// Add db row values to arrays
 				$key = $row['key'];
 				if ($key == self::KEY_VERSION) {
 					$result_versions[] = $row;
@@ -2105,7 +2103,6 @@ class ExternalModules
 		}
 
 		$configFilePath = self::getModuleDirectoryPath($prefix, $version)."/config.json";
-		
 		$config = @self::$configs[$prefix][$version];
 		if($config === null){
 			$fileTesting = file_get_contents($configFilePath);
