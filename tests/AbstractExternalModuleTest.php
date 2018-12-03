@@ -27,28 +27,162 @@ class AbstractExternalModuleTest extends BaseTest
 
     function testCheckSettings_duplicateKeys()
     {
-		self::assertConfigInvalid([
+    	$assertMultipleSettingException = function($config){
+			self::assertConfigInvalid($config, 'setting multiple times!');
+		};
+
+		$assertMultipleSettingException([
 			'system-settings' => [
 				['key' => 'some-key']
 			],
 			'project-settings' => [
 				['key' => 'some-key']
 			],
-		], 'both the system and project level');
+		]);
 
-		self::assertConfigInvalid([
+		$assertMultipleSettingException([
+			'system-settings' => [
+				['key' => 'some-key']
+			],
+			'project-settings' => [
+				['key' => 'some-key']
+			],
+		]);
+
+		$assertMultipleSettingException([
+			'system-settings' => [
+				['key' => 'some-key']
+			],
+			'project-settings' => [
+				[
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						['key' => 'some-key']
+					]
+				]
+			],
+		]);
+
+		$assertMultipleSettingException([
+			'system-settings' => [
+				[
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						['key' => 'some-key']
+					]
+				]
+			],
+			'project-settings' => [
+				['key' => 'some-key']
+			],
+		]);
+
+		$assertMultipleSettingException([
 			'system-settings' => [
 				['key' => 'some-key'],
 				['key' => 'some-key'],
 			],
-		], 'system setting multiple times!');
+		]);
 
-		self::assertConfigInvalid([
+		$assertMultipleSettingException([
+			'system-settings' => [
+				['key' => 'some-key'],
+				[
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						['key' => 'some-key']
+					]
+				]
+			],
+		]);
+
+		$assertMultipleSettingException([
+			'system-settings' => [
+				[
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						['key' => 'some-key']
+					]
+				],
+				['key' => 'some-key']
+			],
+		]);
+
+		$assertMultipleSettingException([
+			'system-settings' => [
+				[
+					'key' => 'some-key',
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						['key' => 'some-key']
+					]
+				]
+			],
+		]);
+
+		$assertMultipleSettingException([
 			'project-settings' => [
 				['key' => 'some-key'],
 				['key' => 'some-key'],
 			],
-		], 'project setting multiple times!');
+		]);
+
+		$assertMultipleSettingException([
+			'project-settings' => [
+				['key' => 'some-key'],
+				[
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						['key' => 'some-key']
+					]
+				]
+			],
+		]);
+
+		$assertMultipleSettingException([
+			'project-settings' => [
+				[
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						['key' => 'some-key']
+					]
+				],
+				['key' => 'some-key']
+			],
+		]);
+
+		$assertMultipleSettingException([
+			'project-settings' => [
+				[
+					'key' => 'some-key',
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						['key' => 'some-key']
+					]
+				]
+			],
+		]);
+
+		// Assert a double nested setting just for kicks.
+		$assertMultipleSettingException([
+			'project-settings' => [
+				[
+					'key' => 'some-key',
+					'type' => 'sub_settings',
+					'sub_settings' => [
+						[
+							'key' => 'some-other-key',
+							'type' => 'sub_settings',
+							'sub_settings' => [
+								[
+									'key' => 'some-other-key'
+								]
+							]
+						]
+					]
+				]
+			],
+		]);
     }
 
 	/**

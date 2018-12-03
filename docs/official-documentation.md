@@ -322,7 +322,7 @@ $value = $module->getProjectSetting('my-project-setting');
 
 ### Available developer methods in External Modules
 
-Listed below are the publicly supported methods that module creators may utilize in their modules. **DO NOT** reference any other methods or files (like the *ExternalModules* class) as they could change at any time.
+Listed below are the publicly supported methods that module creators may utilize in their modules. **DO NOT** reference any other methods or files (like the *ExternalModules* class) as they could change at any time.  If there is a method not listed here that you believe should be supported, feel free to request it via a GitHub issue or pull request. 
 
 #### PHP Module Object
 Since each module's main class will extend *AbstractExternalModule*.  The following built-in methods are available on each module's main class.  They can be called by using **$this** (e.g., `$this->getModuleName()`).
@@ -334,7 +334,7 @@ createDAG($name) | Creates a DAG with the specified name, and returns it's ID.
 delayModuleExecution() | Pushes the execution of the module to the end of the queue; helpful to wait for data to be processed by other modules; execution of the module will be restarted from the beginning.  A boolean is returned that is true if hook was successfully delayed, or false if this is the module's last chance to perform any required actions.
 deleteDAG($dagId) | Given a DAG ID, deletes the DAG and all Users and Records assigned to it.
 disableUserBasedSettingPermissions() | By default an exception will be thrown if a set/remove setting method is called and the current user doesn't have access to change that setting.  Call this method in a module's constructor to disable this behavior and leave settings permission checking up to the module itself.
-exitAfterHook() | Calling this method inside of a hook will schedule PHP's exit() function to be called after ALL modules finish executing for the current hook.
+exitAfterHook() | Calling this method inside of a hook will schedule PHP's exit() function to be called after ALL modules finish executing for the current hook.  Do NOT call die() or exit() manually afterward (the framework will call it for you).
 getChoiceLabel($params) | Given an associative array, get the label associated with the specified choice value for a particular field. See the following example:<br> $params = array('field_name'=>'my_field', 'value'=>3, 'project_id'=>1, 'record_id'=>3, 'event_id'=>18, 'survey_form'=>'my_form', 'instance'=>2);
 getChoiceLabels($fieldName[, $pid]) | Returns an array mapping all choice values to labels for the specified field.
 getConfig() | get the config for the current External Module; consists of config.json and filled-in values
@@ -346,7 +346,7 @@ getProjectId() | A convenience method for returning the current project id.
 getProjectSetting($key&nbsp;[,&nbsp;$pid]) | Returns the value stored for the specified key for the current project if it exists.  If no value is set, null is returned.  In most cases the project id can be detected automatically, but it can optionally be specified as the third parameter instead.
 getProjectSettings([$pid]) | Gets all project settings as an array.  Useful for cases when you may be creating a custom config page for the external module in a project.
 getPublicSurveyUrl() | Returns the public survey url for the current project.
-getQueryLogsSql($sql) | **BETA:** *This feature may change.*  Returns the raw SQL that would run if the supplied parameter was passed into **queryLogs()**. 
+getQueryLogsSql($sql) | Returns the raw SQL that would run if the supplied parameter was passed into **queryLogs()**. 
 getRecordId() | Returns the current record id if called from within a hook that includes the record id.
 getSettingConfig($key) | Returns the configuration for the specified setting.
 getSettingKeyPrefix() | This method can be overridden to prefix all setting keys.  This allows for multiple versions of settings depending on contexts defined by the module.
@@ -357,10 +357,10 @@ getUserSetting($key) | Returns the value stored for the specified key for the cu
 hasPermission($permissionName) | checks whether the current External Module has permission for $permissionName
 initializeJavascriptModuleObject() | Returns a JavaScript block that initializes the JavaScript version of the module object (documented below). 
 isSurveyPage() | Returns true if the current page is a survey.  This is primarily useful in the **redcap_every_page_before_render** and **redcap_save_record** hooks.
-log($message[, $parameters]) | **BETA:** *This feature may change.*  Inserts a log entry including a message and optional array of key-value pairs for later retrieval using the **queryLogs()** method, and returns the inserted **log_id**.  Some parameters/columns are stored automatically, even if the **$parameters** argument is omitted (see **queryLogs()** for more details).
-query($sql) | A thin wrapper around REDCap's db_query() that includes automatic error detection and reporting (including killed queries). 
-queryLogs($sql) | **BETA:** *This feature may change.*   Queries log entries added via the **log()** method using SQL-like syntax with the "from" portion omitted, and returns a MySQL result resource (just like **mysql_query()**).  Queries can include standard "select", "where", "order by", and "group by" clauses.  Available columns include **log_id**, **timestamp**, **user**, **ip**, **project_id**, **record**, **message**, and any parameter name passed to the **log()** method.  All columns must be specified explicitly ("select \*" syntax is not supported).  The raw SQL being executed by this method can be retrieved by calling **getQueryLogsSql()**.  Here are some query examples:*<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select timestamp, user where message = 'some message'<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select message, ip<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timestamp > '2017-07-07'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and user in ('joe', 'tom')<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or some_parameter like '%abc%'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;order by timestamp desc*<br><br>If the `external_module_id` or `project_id` columns are not specified in the where clause, queries are limited to the current module and project (if detected) by default.  For complex queries, the log table can be manually queried (this method does not have to be used). 
-removeLogs($sql) | **BETA:** Removes log entries matching the current module, current project (if detected), and the specified sql "where" clause.
+log($message[, $parameters]) | Inserts a log entry including a message and optional array of key-value pairs for later retrieval using the **queryLogs()** method, and returns the inserted **log_id**.  Some parameters/columns are stored automatically, even if the **$parameters** argument is omitted (see **queryLogs()** for more details).
+query($sql) | A thin wrapper around REDCap's db_query() that includes automatic error detection and reporting. 
+queryLogs($sql) | Queries log entries added via the **log()** method using SQL-like syntax with the "from" portion omitted, and returns a MySQL result resource (just like **mysql_query()**).  Queries can include standard "select", "where", "order by", and "group by" clauses.  Available columns include **log_id**, **timestamp**, **user**, **ip**, **project_id**, **record**, **message**, and any parameter name passed to the **log()** method.  All columns must be specified explicitly ("select \*" syntax is not supported).  The raw SQL being executed by this method can be retrieved by calling **getQueryLogsSql()**.  Here are some query examples:*<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select timestamp, user where message = 'some message'<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select message, ip<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timestamp > '2017-07-07'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and user in ('joe', 'tom')<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or some_parameter like '%abc%'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;order by timestamp desc*<br><br>If the `external_module_id` or `project_id` columns are not specified in the where clause, queries are limited to the current module and project (if detected) by default.  For complex queries, the log table can be manually queried (this method does not have to be used). 
+removeLogs($sql) | Removes log entries matching the current module, current project (if detected), and the specified sql "where" clause.
 removeProjectSetting($key&nbsp;[,&nbsp;$pid]) | Remove the value stored for this project and the specified key.  In most cases the project id can be detected automatically, but it can optionaly be specified as the third parameter instead. 
 removeSystemSetting($key) | Removes the value stored systemwide for the specified key.
 removeUserSetting($key) | Removes the value stored for the specified key for the current user and project.  This method does nothing on surveys and NOAUTH pages.
@@ -374,7 +374,7 @@ setSystemSetting($key,&nbsp;$value) | Set the setting specified by the key to th
 setUserSetting($key, $value) |  Sets the setting specified by the key to the given value for the current user and project.  This method does nothing on surveys and NOAUTH pages.  
 validateSettings($settings) | Override this method in order to validate settings at save time.  If a non-empty error message string is returned, it will be displayed to the user, and settings will NOT be saved. 
 
-### **BETA:** JavaScript Module Object
+### JavaScript Module Object
 A JavaScript version of the module object can be created by calling the PHP module object's `initializeJavascriptModuleObject()` method at any point in any hook.  It will generate a JavaScript object matching the following pattern:
  
 ```ExternalModules.PHPNamespace.PHPClassName```
@@ -476,6 +476,11 @@ class MyModuleClass extends AbstractExternalModule {
    }
 }
 ```
+
+### Including Dependencies/Libraries in your Module
+If your module uses a third party library (i.e. PHPMailer) that is available in the [packagist.org](https://packagist.org) repo, please use [composer](https://getcomposer.org/) to include it.  While this adds an extra step when submitting to the module repo, it greatly reduces the chances of conflicts between modules that can cause those modules and/or REDCap to crash.  Composer's class loader automatically handles cases like calling **require** for the same class from multiple modules.  While this does mean that modules could potentially end up using the version of a dependency from another module instead of their own, this is rarely an issue in practice (as evidenced by the WordPress community's reliance on composer for plugin & theme dependencies).  Implementing a more complex dependency management system similar to Drupal's has been discussed, but such an effort is not likely since the current method is generally not an issue in practice.
+
+If you would like to create a library to share between multiple modules, [composer can also use github as a repo](https://getcomposer.org/doc/05-repositories.md#loading-a-package-from-a-vcs-repository).
 
 ### Example config.json file
 
