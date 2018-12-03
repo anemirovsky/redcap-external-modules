@@ -375,12 +375,16 @@ class ExternalModules
 				$message .= 'Error Message: ' . $error['message'] . "\n";
 				$message .= 'File: ' . $error['file'] . "\n";
 				$message .= 'Line: ' . $error['line'] . "\n";
-			} else if (ExternalModules::$currentQuery !== null) {
-				$message .= " because the following query did not complete.  REDCap may have detected it as a duplicate and automatically killed it:\n\n" . ExternalModules::$currentQuery;
-				$sendAdminEmail = false;
 			} else {
-				$message .= ", but a specific cause could not be detected.  This could be caused by a die() or exit() call in the module, either of which should be removed to allow other module hooks to continue executing.";
-				$message .= "  This could also be caused by a killed duplicate query initiated via db_query().  All queries should be made via \$module->query() so that duplicate queries can be detected and ignored. \n";
+				$output = ob_get_contents();
+				if(strpos($output, "multiple browser tabs of the same REDCap page") !== false){
+					// REDCap detected and killed a duplicate request/query.
+					// The is expected behavior.  Do not report this error.
+					return;
+				}
+				else{
+					$message .= ", but a specific cause could not be detected.  This could be caused by a die() or exit() call in the module which needs to be replaced with \$module->exitAfterHook() to allow other modules to execute for the current hook.";
+				}
 			}
 
 			if (basename($_SERVER['REQUEST_URI']) == 'enable-module.php') {
@@ -1390,6 +1394,10 @@ class ExternalModules
 		foreach ($hookNames as $thisHook) {
 			if(method_exists($instance, $thisHook)){
 				self::setActiveModulePrefix($prefix);
+
+				// Buffer output so we can access for killed query detection using register_shutdown_function().
+				ob_start();
+
 				try{
 					call_user_func_array(array($instance,$thisHook), $arguments);
 				}
@@ -1398,6 +1406,9 @@ class ExternalModules
 					error_log($message);
 					ExternalModules::sendAdminEmail("REDCap External Module Hook Exception - $prefix", $message, $prefix);
 				}
+
+				echo ob_get_clean();
+
 				self::setActiveModulePrefix(null);
 				continue; // No need to check for the alternate hook name.
 			}
@@ -1626,22 +1637,17 @@ class ExternalModules
 
 			$classNameWithNamespace = "\\$namespace\\$className";
 
-			if(!class_exists($classNameWithNamespace)){
-				$classFilePath = "$modulePath/$className.php";
+			$classFilePath = "$modulePath/$className.php";
 
-				if(!file_exists($classFilePath)){
-					throw new Exception("Could not find the module class file '$classFilePath' for the module with prefix '$prefix'.");
-				}
-
-				self::safeRequireOnce($classFilePath);
-
-				if (!class_exists($classNameWithNamespace)) {
-					throw new Exception("The file '$className.php' file must define the '$classNameWithNamespace' class for the '$prefix' module.");
-				}
+			if(!file_exists($classFilePath)){
+				throw new Exception("Could not find the module class file '$classFilePath' for the module with prefix '$prefix'.");
 			}
-			else{
-				throw new Exception("The " . __FUNCTION__ . "() method attempted to load the '$prefix' module class twice.  This should never happen, and suggests that there is an issue with the way modules are loaded.");
-            }
+
+			self::safeRequireOnce($classFilePath);
+
+			if (!class_exists($classNameWithNamespace)) {
+				throw new Exception("The file '$className.php' file must define the '$classNameWithNamespace' class for the '$prefix' module.");
+			}
 
 			$instance = new $classNameWithNamespace();
 			self::$instanceCache[$prefix][$version] = $instance;
@@ -1755,16 +1761,14 @@ class ExternalModules
 	{
 		if ($version && strpos($_SERVER['REQUEST_URI'], '/manager/ajax/enable-module.php') !== false && $prefix == $_POST['prefix'] && $_POST['version'] != $version) {
             // We are in the process of switching an already enabled module from one version to another.
-            // We need to exclude the old version of the module to ensure that the hook for the new version is the one that executed.
+            // We need to exclude the old version of the module to ensure that the hook for the new version is the one that is executed.
 			return true;
 		}
 
-		$modulePath = self::getModuleDirectoryPath($prefix, $version);
-		$doesDirectoryExist = (file_exists($modulePath) && is_dir($modulePath));
-
+		// The fake unit testing modules are not currently ever enabled in the DB,
+		// but we may as well leave this check in place in case that changes in the future.
 		$isTestPrefix = strpos($prefix, self::TEST_MODULE_PREFIX) === 0;
-
-		if($doesDirectoryExist && $isTestPrefix && !self::isTesting($prefix)){
+		if($isTestPrefix && !self::isTesting($prefix)){
 			// This php process is not running unit tests.
 			// Ignore the test prefix so it doesn't interfere with this process.
 			return true;
@@ -2294,7 +2298,12 @@ class ExternalModules
 
 			$result = db_query($sql);
 
-			$matchingProjects = [];
+			$matchingProjects = [
+				[
+					"id" => "",
+					"text" => "--- None ---"
+				]
+			];
 
 			while($row = db_fetch_assoc($result)) {
 				$matchingProjects[] = [
