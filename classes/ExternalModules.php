@@ -2303,9 +2303,6 @@ class ExternalModules
 	public static function getEnabledVersion($prefix)
 	{
 		$versionsByPrefix = self::getSystemwideEnabledVersions();
-		if (!isset($versionsByPrefix[$prefix]) && isset(self::$bundledModules[$prefix])) {
-			$versionsByPrefix[$prefix] = self::$bundledModules[$prefix];
-		}
 		return @$versionsByPrefix[$prefix];
 	}
 
