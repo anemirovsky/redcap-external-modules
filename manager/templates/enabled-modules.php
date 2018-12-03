@@ -172,10 +172,8 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 		foreach (\ExternalModules\ExternalModules::getModulesInModuleDirectories() as $thisModule) {
 			?><input type="hidden" name="downloaded_modules[]" value="<?=$thisModule?>"><?php 
 		}
-		if (method_exists('\ExternalModules\ExternalModules', 'getBundledModulePrefixes')) {
-			foreach (\ExternalModules\ExternalModules::getBundledModulePrefixes() as $thisModule) {
-				?><input type="hidden" name="bundled_modules[]" value="<?=$thisModule?>"><?php 
-			}
+		foreach (\ExternalModules\ExternalModules::getBundledModulePrefixes() as $thisModule) {
+			?><input type="hidden" name="bundled_modules[]" value="<?=$thisModule?>"><?php 
 		}
 		?>
 	</form>
