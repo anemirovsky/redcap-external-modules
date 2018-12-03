@@ -820,21 +820,6 @@ class ExternalModules
 
 	static function getSystemSetting($moduleDirectoryPrefix, $key)
 	{
-		// For bundled modules, their systems will not be stored in the db table
-		if (self::isBundledModule($moduleDirectoryPrefix)) {
-			// Always return the bundled version number (in case other versions exist elsewhere)
-			if ($key == self::KEY_VERSION) {
-				return self::$bundledModules[$moduleDirectoryPrefix];
-			} 
-			// Always return the bundled module as eanbled
-			elseif ($key == self::KEY_ENABLED) {
-				return true;
-			}
-			// Other module attribute from default in config.json
-			else {
-				return self::getSettingDefaultFromConfig($moduleDirectoryPrefix, $key, true);
-			}
-		}
 		// Return setting from db table
 		return self::getSetting($moduleDirectoryPrefix, self::SYSTEM_SETTING_PROJECT_ID, $key);
 	}
@@ -1844,6 +1829,8 @@ class ExternalModules
 						}
 						// Enable the bundled version of the module
 						self::enableAndCatchExceptions($prefix, $version);
+						// Set the module to be enabled on all projects by default
+						self::saveSettings($prefix, "", array('enabled'=>true));
 						// Remove flag
 						unset($GLOBALS['rcem_bundled_module_enable']);
 						// Manually set the module values in the arrays now that we've enable the module
