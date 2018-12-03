@@ -289,6 +289,13 @@ class ExternalModules
 		return isset(self::$bundledModules[$prefix]);
 	}
 
+	// Return bundled modules array with ONLY prefixes
+	public static function getBundledModulePrefixes()
+	{
+		self::initBundledModules();
+		return array_keys(self::$bundledModules);
+	}
+
 	// Initialize the bundled modules array
 	public static function initBundledModules()
 	{

@@ -42,7 +42,7 @@ $disableModuleConfirmProject = (isset($_GET['pid']) & !empty($_GET['pid'])) ? " 
 			<div class="modal-header">
 				<h4 class="modal-title clearfix">
 					<div class="float-left">Available Modules</div>
-					<div class="float-right" style="margin-left:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules" autofocus></div>
+					<div class="float-right" style="margin-left:50px;"><input type="text" id="disabled-modules-search" class="quicksearchsm" placeholder="Search available modules"></div>
 				</h4>
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
@@ -168,9 +168,16 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 		<input type="hidden" name="php_version" value="<?=PHP_VERSION?>">
 		<input type="hidden" name="redcap_version" value="<?=REDCAP_VERSION?>">		
 		<input type="hidden" name="institution" value="<?=htmlspecialchars($GLOBALS['institution'], ENT_QUOTES)?>">
-		<?php foreach (\ExternalModules\ExternalModules::getModulesInModuleDirectories() as $thisModule) { ?>
-			<input type="hidden" name="downloaded_modules[]" value="<?=$thisModule?>">
-		<?php } ?>
+		<?php 
+		foreach (\ExternalModules\ExternalModules::getModulesInModuleDirectories() as $thisModule) {
+			?><input type="hidden" name="downloaded_modules[]" value="<?=$thisModule?>"><?php 
+		}
+		if (method_exists('\ExternalModules\ExternalModules', 'getBundledModulePrefixes')) {
+			foreach (\ExternalModules\ExternalModules::getBundledModulePrefixes() as $thisModule) {
+				?><input type="hidden" name="bundled_modules[]" value="<?=$thisModule?>"><?php 
+			}
+		}
+		?>
 	</form>
 <?php } ?>
 <br>
@@ -259,7 +266,7 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
                         </div><div class='external-modules-description'><?php echo $config['description'] ? $config['description'] : ''; ?></div><div class='external-modules-byline'>
 <?php
 	if (SUPER_USER && !isset($_GET['pid'])) {
-        if ($config['authors'] && !$isBundled) {
+        if ($config['authors']) {
                 $names = array();
                 foreach ($config['authors'] as $author) {
                         $name = $author['name'];
@@ -291,10 +298,10 @@ $moduleDialogBtnImg = SUPER_USER ? "fas fa-plus-circle" : "fas fa-info-circle";
 							&& (!isset($_GET['pid']) || (isset($_GET['pid']) && self::hasProjectSettingSavePermission($prefix))) && $module_instance->redcap_module_configure_button_display($_GET['pid'])){?>
 							<button class='external-modules-configure-button'>Configure</button>
 						<?php } ?>
-						<?php if(SUPER_USER && !$isBundled) { ?>
+						<?php if(SUPER_USER) { ?>
 							<button class='external-modules-disable-button'>Disable</button>
 						<?php } ?>
-						<?php if(!isset($_GET['pid']) && !$isBundled) { ?>
+						<?php if(!isset($_GET['pid'])) { ?>
 							<button class='external-modules-usage-button' style="min-width: 90px">View Usage</button>
 						<?php } ?>
 					</td>
