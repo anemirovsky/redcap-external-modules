@@ -1814,7 +1814,7 @@ class ExternalModules
 			}
 			
 			## AUTO-ENABLE BUNDLED MODULES
-			// Skip enabling of bundled module if we're iteratively trying to enable it right now
+			// Skip enabling of bundled module if we're recursively trying to enable it right now
 			if (!isset($GLOBALS['rcem_bundled_module_enable'])) 
 			{
 				// Add bundled versions first since they take priority
@@ -1828,7 +1828,7 @@ class ExternalModules
 					// ENABLE the bundled module
 					$enableBundledModule = (!$bundledModuleEnabled || ($bundledModuleEnabled && $version != $prefix_version[$prefix]));
 					if ($enableBundledModule) {
-						// Set flag to skip this part if called iteratively in enableForProject()
+						// Set flag to skip this part if called recursively in enableForProject()
 						$GLOBALS['rcem_bundled_module_enable'] = $prefix;
 						// Remove existing entry from arrays first
 						if ($bundledModuleEnabled) {
