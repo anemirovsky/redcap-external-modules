@@ -1784,8 +1784,6 @@ class ExternalModules
             $result_versions = array();
 			$result_enabled = array();
 			$prefix_version = array();
-			
-			// Add to respective arrays from db table
 			while($row = self::validateSettingsRow(db_fetch_assoc($result))) {
 				$key = $row['key'];
 				if ($key == self::KEY_VERSION) {
