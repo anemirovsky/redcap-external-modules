@@ -2562,6 +2562,10 @@ class ExternalModules
 		// Also obtain the folder name of the module
 		$moduleFolderName = http_get(APP_URL_EXTMOD_LIB . "download.php?module_id=$module_id&name=1");
 
+		if(empty($moduleFolderName)){
+			throw new Exception("The request to retrieve the name for module $module_id from the repo failed.");
+		}
+
 		\REDCap::logEvent("Download external module \"$moduleFolderName\" from repository");
 
 		// First see if the module directory already exists
