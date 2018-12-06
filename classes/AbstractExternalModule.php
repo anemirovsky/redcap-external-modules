@@ -1483,34 +1483,38 @@ class AbstractExternalModule
 		return $sql;
 	}
 
-	private function processPseudoQuery(&$parsed, &$fields, $addAs)
+	private function processPseudoQuery(&$parsed, &$fields, $addAs, $parentItem = null)
 	{
 		for ($i = 0; $i < count($parsed); $i++) {
 			$item =& $parsed[$i];
 			$subtree =& $item['sub_tree'];
 
 			if (is_array($subtree)) {
-				$this->processPseudoQuery($subtree, $fields, $addAs);
-			} else if (
-				$item['expr_type'] == 'colref'
-				&& $item['base_expr'] !== '*' // This allows for "count(*)" queries
-			){
-				$field = $item['base_expr'];
-				$fields[] = $field;
-
-				if ($field === 'username') {
-					$newField = 'redcap_user_information.username';
-				} else if(isset(self::$LOG_PARAMETERS_ON_MAIN_TABLE[$field])) {
-					$newField = "redcap_external_modules_log.$field";
-				} else {
-					$newField = "$field.value";
-
-					if ($addAs && $item['alias'] == false) {
-						$newField .= " as $field";
+				$this->processPseudoQuery($subtree, $fields, $addAs, $item);
+			} else if ($item['expr_type'] == 'colref'){
+				if($item['base_expr'] === '*'){
+					if(strtolower(@$parentItem['base_expr']) !== 'count'){
+						throw new Exception("Log queries do not currently '*' for selecting column names.  Columns must be explicitly defined in all log queries.");
 					}
 				}
+				else{
+					$field = $item['base_expr'];
+					$fields[] = $field;
 
-				$item['base_expr'] = $newField;
+					if ($field === 'username') {
+						$newField = 'redcap_user_information.username';
+					} else if(isset(self::$LOG_PARAMETERS_ON_MAIN_TABLE[$field])) {
+						$newField = "redcap_external_modules_log.$field";
+					} else {
+						$newField = "$field.value";
+
+						if ($addAs && $item['alias'] == false) {
+							$newField .= " as $field";
+						}
+					}
+
+					$item['base_expr'] = $newField;
+				}
 			}
 		}
 	}

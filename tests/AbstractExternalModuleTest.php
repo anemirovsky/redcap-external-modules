@@ -944,6 +944,20 @@ class AbstractExternalModuleTest extends BaseTest
 		$this->assertTrue(true); // Each test requires an assertion
 	}
 
+	function testQueryLogs_stars(){
+		$m = $this->getInstance();
+
+		// "select count(*)" should be allowed
+		$result = $m->queryLogs("select count(*) as count where some_fake_parameter = 1");
+		$row = $result->fetch_assoc();
+		$this->assertSame('0', $row['count']);
+
+		// "select *" should not be allowed
+		$this->assertThrowsException(function() use ($m){
+			$m->queryLogs('select * where some_fake_parameter = 1');
+		}, "Columns must be explicitly defined in all log queries");
+	}
+
 	function testGetQueryLogsSql_moduleId()
 	{
 		$m = $this->getInstance();
